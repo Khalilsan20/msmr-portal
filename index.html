@@ -63,8 +63,8 @@
 </section>
 
 <script>
-    const FIREBASE_URL = "https://your-database-link.firebaseio.com/students.json";
-    https://msmr-portal-default-rtdb.firebaseio.com/
+    // ✅ FIXED DATABASE LINK
+    const FIREBASE_URL = "https://msmr-portal-default-rtdb.firebaseio.com/students.json";
 
     function show(id) {
         document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active-section'));
@@ -92,7 +92,7 @@
             alert("Success! " + name + " is now registered in the cloud database.");
             location.reload();
         } catch (e) {
-            alert("Cloud error: Check your internet connection.");
+            alert("Cloud error: Please check your Firebase Rules.");
             btn.disabled = false;
             btn.innerText = "SUBMIT & SAVE ONLINE";
         }
@@ -105,7 +105,6 @@
             show('adminDash');
             loadAdminData();
         } else {
-            // Student Login Logic
             const res = await fetch(FIREBASE_URL);
             const data = await res.json();
             const found = Object.values(data || {}).find(s => s.ph === val);
