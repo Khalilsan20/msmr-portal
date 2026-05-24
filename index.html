@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSMR Kano - Complete Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .msmr-blue { background-color: #1e3a8a !important; }
+        .msmr-text { color: #1e3a8a !important; }
+        .page-section { display: none; }
+        .active-section { display: block !important; }
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .print-card { border: 2px solid #1e3a8a !important; width: 100% !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans">
+
+<header class="msmr-blue text-white py-8 shadow-xl no-print text-center border-b-4 border-yellow-500">
+    <h1 class="text-3xl font-black uppercase tracking-tight">Mu’assasatu Sheikh Muhammad Rabi’u</h1>
+    <p class="text-[10px] font-bold opacity-80 mt-1 uppercase tracking-[4px]">Goran Dutse, Kano State</p>
+</header>
+
+<nav class="bg-white shadow-sm no-print sticky top-0 z-50">
+    <div class="flex justify-center space-x-8 py-4 text-[11px] font-black uppercase text-gray-500">
+        <button onclick="show('homePage')">Home</button>
+        <button onclick="show('applyPage')">Student Reg</button>
+        <button onclick="show('loginPage')" class="msmr-text border-2 border-blue-900 px-4 py-1 rounded-full font-black">Login</button>
+    </div>
+</nav>
+
+<section id="homePage" class="page-section active-section no-print container mx-auto px-4 py-16 text-center">
+    <div class="max-w-xl mx-auto bg-white p-12 rounded-3xl shadow-xl">
+        <h2 class="text-2xl font-black msmr-text mb-4 uppercase">Portal Dashboard</h2>
+        <p class="text-gray-400 text-sm mb-10 italic">Welcome to the MSMR Official Portal.</p>
+        <div class="flex flex-col gap-3">
+            <button onclick="show('applyPage')" class="msmr-blue text-white py-4 rounded-xl font-bold uppercase shadow-lg">New Registration</button>
+            <button onclick="show('loginPage')" class="bg-slate-100 msmr-text py-4 rounded-xl font-bold uppercase">Check Interview Slip</button>
+        </div>
+    </div>
+</section>
+
+<section id="applyPage" class="page-section max-w-lg mx-auto my-10 p-8 bg-white rounded-3xl shadow-xl no-print">
+    <h2 class="text-xl font-black msmr-text mb-6 uppercase text-center border-b pb-2">Student Application</h2>
+    <div class="space-y-4">
+        <input id="fName" type="text" placeholder="First Name" class="w-full border-2 p-3 rounded-xl outline-none">
+        <input id="lName" type="text" placeholder="Surname" class="w-full border-2 p-3 rounded-xl outline-none">
+        <input id="phone" type="tel" placeholder="Phone Number (This is your Login ID)" class="w-full border-2 p-3 rounded-xl outline-none">
+        <select id="prog" class="w-full border-2 p-3 rounded-xl font-bold">
+            <option value="One Year Hadda">One Year Hadda</option>
+            <option value="Biye Hadda">Biye Hadda</option>
+        </select>
+        <button onclick="saveStudent()" class="w-full msmr-blue text-white p-4 rounded-xl font-black uppercase shadow-lg">Register & Save</button>
+    </div>
+</section>
+
+<section id="loginPage" class="page-section max-w-sm mx-auto my-20 p-10 bg-white rounded-3xl shadow-2xl no-print text-center">
+    <h2 class="text-xl font-black msmr-text uppercase mb-6">Login</h2>
+    <input id="logPh" type="tel" placeholder="Enter Phone or 'admin'" class="w-full border-2 p-4 rounded-2xl mb-4 text-center text-lg outline-none">
+    <button onclick="doLogin()" class="w-full msmr-blue text-white p-4 rounded-2xl font-black uppercase shadow-lg">Enter</button>
+</section>
+
+<section id="adminDash" class="page-section max-w-5xl mx-auto my-10 p-10 bg-white rounded-3xl shadow-xl no-print">
+    <div class="flex justify-between items-center border-b-2 pb-4 mb-8">
+        <div>
+            <h2 class="text-2xl font-black text-blue-900 uppercase">Admin Management</h2>
+            <p id="totalCounter" class="text-blue-600 font-bold text-xs uppercase tracking-widest mt-1"></p>
+        </div>
+        <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-1 rounded font-bold text-[10px] uppercase">Sign Out</button>
+    </div>
+    <div id="adminStudentList" class="space-y-4"></div>
+</section>
+
+<section id="admissionSlip" class="page-section max-w-3xl mx-auto my-5 bg-white print-card shadow-2xl overflow-hidden rounded-2xl">
+    <div class="msmr-blue p-8 text-white text-center border-b-[6px] border-yellow-500">
+        <h1 class="text-2xl font-black uppercase">Mu’assasatu Sheikh Muhammad Rabi’u</h1>
+        <p class="text-[9px] font-bold opacity-80 uppercase tracking-[3px]">Goran Dutse, Kano State</p>
+    </div>
+    <div class="p-10">
+        <div class="grid grid-cols-2 gap-8 mb-8 border-b pb-8">
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Candidate Name</label><p id="p_name" class="text-lg font-bold uppercase"></p></div>
+            <div><label class="text-[9px] font-bold text-gray-400 uppercase">Program</label><p id="p_pr" class="text-lg font-bold uppercase msmr-text"></p></div>
+        </div>
+        <div class="bg-blue-50 border-2 border-blue-900 p-8 rounded-3xl text-center">
+            <h3 class="text-lg font-black msmr-text uppercase mb-6 underline">Interview Schedule</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <div><p class="text-[9px] font-bold text-gray-400 uppercase">Date</p><p id="p_date" class="font-bold"></p></div>
+                <div><p class="text-[9px] font-bold text-gray-400 uppercase">Time</p><p id="p_time" class="font-bold"></p></div>
+                <div><p class="text-[9px] font-bold text-gray-400 uppercase">Venue</p><p id="p_venue" class="font-bold"></p></div>
+            </div>
+        </div>
+        <div class="mt-10 no-print flex justify-between">
+            <button onclick="window.print()" class="bg-black text-white px-8 py-2 rounded font-black text-xs uppercase shadow-md">Print Slip</button>
+            <button onclick="location.reload()" class="text-red-600 font-bold uppercase text-xs">Exit</button>
+        </div>
+    </div>
+</section>
+
+<script>
+    // --- DATABASE LOGIC ---
+    let students = JSON.parse(localStorage.getItem('MSMR_DATABASE_V22')) || [];
+
+    const show = (id) => {
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active-section'));
+        document.getElementById(id).classList.add('active-section');
+        window.scrollTo(0,0);
+    };
+
+    function saveStudent() {
+        const fn = document.getElementById('fName').value.trim();
+        const ln = document.getElementById('lName').value.trim();
+        const ph = document.getElementById('phone').value.trim();
+        const pr = document.getElementById('prog').value;
+
+        if(!fn || !ph) return alert("Error: Name and Phone required!");
+        if(students.find(s => s.ph === ph)) return alert("This phone number is already registered!");
+
+        const newS = { 
+            name: fn + " " + ln, 
+            ph: ph, 
+            pr: pr, 
+            date: 'Pending', 
+            time: 'Pending', 
+            venue: 'Main Campus' 
+        };
+
+        students.push(newS);
+        localStorage.setItem('MSMR_DATABASE_V22', JSON.stringify(students));
+        
+        alert("Registration Successful!");
+        openSlip(newS);
+    }
+
+    function doLogin() {
+        const input = document.getElementById('logPh').value.trim();
+        
+        if(input === 'admin') {
+            loadAdminDash();
+            show('adminDash');
+        } else {
+            const found = students.find(s => s.ph === input);
+            if(found) {
+                openSlip(found);
+            } else {
+                alert("Phone number not found. Please register first.");
+            }
+        }
+    }
+
+    function loadAdminDash() {
+        document.getElementById('totalCounter').innerText = "Total Registered Students: " + students.length;
+        const list = document.getElementById('adminStudentList');
+        
+        if(students.length === 0) {
+            list.innerHTML = "<p class='text-center text-gray-400'>No students yet.</p>";
+            return;
+        }
+
+        list.innerHTML = students.map((s, i) => `
+            <div class="p-5 border-2 rounded-2xl bg-gray-50 flex flex-wrap items-end gap-4 shadow-sm">
+                <div class="flex-1 min-w-[150px]">
+                    <p class="font-black uppercase msmr-text text-sm">${s.name}</p>
+                    <p class="text-[10px] font-bold text-gray-400">${s.ph} | ${s.pr}</p>
+                </div>
+                <div><label class="block text-[8px] font-bold uppercase">Date</label><input type="text" id="d_${i}" value="${s.date}" class="border p-2 rounded text-xs w-24"></div>
+                <div><label class="block text-[8px] font-bold uppercase">Time</label><input type="text" id="t_${i}" value="${s.time}" class="border p-2 rounded text-xs w-24"></div>
+                <div><label class="block text-[8px] font-bold uppercase">Venue</label><input type="text" id="v_${i}" value="${s.venue}" class="border p-2 rounded text-xs w-24"></div>
+                <button onclick="updateData(${i})" class="bg-blue-900 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase">Save</button>
+            </div>
+        `).join('');
+    }
+
+    function updateData(i) {
+        students[i].date = document.getElementById('d_' + i).value;
+        students[i].time = document.getElementById('t_' + i).value;
+        students[i].venue = document.getElementById('v_' + i).value;
+        localStorage.setItem('MSMR_DATABASE_V22', JSON.stringify(students));
+        alert("Updated Successfully!");
+    }
+
+    function openSlip(data) {
+        document.getElementById('p_name').innerText = data.name;
+        document.getElementById('p_pr').innerText = data.pr;
+        document.getElementById('p_date').innerText = data.date;
+        document.getElementById('p_time').innerText = data.time;
+        document.getElementById('p_venue').innerText = data.venue;
+        show('admissionSlip');
+    }
+</script>
+</body>
+</html>
