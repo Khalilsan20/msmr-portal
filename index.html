@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MSMR Kano – Admission Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
 :root{
   --navy:#1e3a8a;--navy-dark:#1e2d6b;--navy-light:#2d4ba0;
@@ -65,6 +66,36 @@ nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
 .btn-primary:hover{background:var(--gold-dark);transform:translateY(-2px);}
 .btn-secondary{background:rgba(255,255,255,.15);color:#fff;padding:.75rem 1.75rem;border-radius:8px;font-weight:500;font-size:14px;border:1.5px solid rgba(255,255,255,.4);transition:all .2s;}
 .btn-secondary:hover{background:rgba(255,255,255,.25);}
+
+/* ── ADMISSIONS BADGE ── */
+.admissions-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);border:1.5px solid var(--gold);color:var(--gold-light);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:999px;margin-bottom:1.1rem;}
+
+/* ── HERO CREST ── */
+.hero-crest{width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.35);margin:0 auto 1rem;display:block;background:#fff;}
+
+/* ── AI FAQ CHAT WIDGET ── */
+.ai-chat-fab{position:fixed;bottom:22px;right:22px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer;z-index:500;border:none;transition:transform .2s;}
+.ai-chat-fab:hover{transform:scale(1.08);}
+.ai-chat-fab .fab-dot{position:absolute;top:2px;right:2px;width:12px;height:12px;background:var(--green);border-radius:50%;border:2px solid #fff;}
+.ai-chat-panel{position:fixed;bottom:92px;right:22px;width:min(340px,calc(100vw - 32px));max-height:70vh;background:#fff;border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;z-index:501;transform:translateY(12px) scale(.96);opacity:0;pointer-events:none;transition:all .2s ease;}
+.ai-chat-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto;}
+.ai-chat-head{background:linear-gradient(135deg,var(--navy-dark),var(--navy));color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.ai-chat-head strong{font-size:14px;display:block;}
+.ai-chat-head span{font-size:11px;color:rgba(255,255,255,.65);}
+.ai-chat-close{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;}
+.ai-chat-body{flex:1;overflow-y:auto;padding:14px;background:var(--gray-50);display:flex;flex-direction:column;gap:8px;}
+.ai-msg{max-width:85%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;}
+.ai-msg.bot{background:#fff;border:1px solid var(--gray-200);align-self:flex-start;border-bottom-left-radius:2px;}
+.ai-msg.user{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:2px;}
+.ai-chip-row{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px;}
+.ai-chip{background:rgba(30,58,138,.08);color:var(--navy);border:1px solid rgba(30,58,138,.15);border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;}
+.ai-chip:hover{background:var(--navy);color:#fff;}
+.ai-chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--gray-200);background:#fff;}
+.ai-chat-input-row input{flex:1;border:1.5px solid var(--gray-200);border-radius:20px;padding:8px 14px;font-size:13px;outline:none;}
+.ai-chat-input-row input:focus{border-color:var(--navy);}
+.ai-chat-send{background:var(--navy);color:#fff;border:none;width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;flex-shrink:0;}
+.ai-chat-send:hover{background:var(--navy-dark);}
+@media (max-width:420px){.ai-chat-panel{right:16px;bottom:86px;} .ai-chat-fab{right:16px;bottom:16px;}}
 
 /* ── STATS STRIP ── */
 .stats-strip{background:var(--gold);display:flex;justify-content:center;flex-wrap:wrap;border-bottom:1px solid var(--gold-dark);}
@@ -362,14 +393,15 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
     <img id="header-logo" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt="MSMR"/>
     <div class="header-titles">
       <h1>Mu'assasatu Sheikh Muhammad Rabi'u</h1>
-      <p>MSMR Kano · Qur'an Memorization Programme</p>
+      <p data-i18n="header_sub">MSMR Kano · Qur'an Memorization Programme</p>
     </div>
   </div>
   <nav>
-    <button class="nav-btn active" onclick="showPage('home')">🏠 Home</button>
-    <button class="nav-btn" onclick="showPage('register')">📝 Register</button>
-    <button class="nav-btn" onclick="showPage('rules')">📜 Rules</button>
-    <button class="nav-btn gold" onclick="showPage('login')">🔐 Login</button>
+    <button class="nav-btn active" onclick="showPage('home')" data-i18n="nav_home">🏠 Home</button>
+    <button class="nav-btn" onclick="showPage('register')" data-i18n="nav_register">📝 Register</button>
+    <button class="nav-btn" onclick="showPage('rules')" data-i18n="nav_rules">📜 Rules</button>
+    <button class="nav-btn gold" onclick="showPage('login')" data-i18n="nav_login">🔐 Login</button>
+    <button class="nav-btn" onclick="toggleLanguage()" id="lang-toggle-btn" style="border:1.5px solid rgba(255,255,255,.3);">🌐 HA</button>
   </nav>
 </header>
 
@@ -379,40 +411,42 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
     <div class="hero-bg" id="hero-bg"></div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h2>🕌 Free Qur'an Memorization Programme</h2>
+      <div class="admissions-badge" data-i18n="admissions_badge">🎓 Admissions Open · 2025/2026</div>
+      <img id="hero-logo" class="hero-crest" alt="MSMR"/>
+      <h2 data-i18n="hero_title">🕌 Free Qur'an Memorization Programme</h2>
       <div class="hero-arabic">مؤسسة الشيخ محمد ربيع – كانو</div>
-      <p>A free one-year hifz programme for students aged 15 and above. Build your sadaqah jāriyah. 🌙✨</p>
+      <p data-i18n="hero_desc">A free one-year hifz programme for students aged 15 and above. Build your sadaqah jāriyah. 🌙✨</p>
       <div class="hero-cta">
-        <button class="btn-primary" onclick="showPage('register')">✍️ Apply Now — It's Free!</button>
-        <button class="btn-secondary" onclick="showPage('login')">🎫 Check My Interview Slip</button>
+        <button class="btn-primary" onclick="showPage('register')" data-i18n="btn_apply">✍️ Apply Now — It's Free!</button>
+        <button class="btn-secondary" onclick="showPage('login')" data-i18n="btn_check_slip">🎫 Check My Interview Slip</button>
       </div>
     </div>
   </div>
 
   <div class="stats-strip">
-    <div class="stat-item"><div class="stat-num">1 yr</div><div class="stat-label">📅 Programme</div></div>
-    <div class="stat-item"><div class="stat-num">15+</div><div class="stat-label">🎂 Eligible Age</div></div>
-    <div class="stat-item"><div class="stat-num">Free</div><div class="stat-label">💰 No Fees</div></div>
-    <div class="stat-item"><div class="stat-num" id="stat-students">…</div><div class="stat-label">👥 Registered</div></div>
+    <div class="stat-item"><div class="stat-num">1 yr</div><div class="stat-label" data-i18n="stat_program">📅 Programme</div></div>
+    <div class="stat-item"><div class="stat-num">15+</div><div class="stat-label" data-i18n="stat_age">🎂 Eligible Age</div></div>
+    <div class="stat-item"><div class="stat-num">Free</div><div class="stat-label" data-i18n="stat_fees">💰 No Fees</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-students">…</div><div class="stat-label" data-i18n="stat_registered">👥 Registered</div></div>
   </div>
 
   <!-- Notice Boards -->
   <div class="notice-section">
-    <div class="notice-section-title">📋 Latest Announcements</div>
+    <div class="notice-section-title" data-i18n="notices_title">📋 Latest Announcements</div>
     <div class="notice-grid" id="notice-grid">
-      <div class="no-notices">Loading announcements… ⏳</div>
+      <div class="no-notices" data-i18n="notices_loading">Loading announcements… ⏳</div>
     </div>
   </div>
 
   <div class="about-section">
-    <div class="section-badge">✨ About the Programme</div>
-    <h2 class="section-title">Rooted in scholarship, built on sincerity</h2>
+    <div class="section-badge" data-i18n="about_badge">✨ About the Programme</div>
+    <h2 class="section-title" data-i18n="about_title">Rooted in scholarship, built on sincerity</h2>
     <div class="divider"></div>
     <div class="feature-grid">
-      <div class="feature-card"><div class="feature-icon">📖</div><h4>Qur'an Memorization (Hifz)</h4><p>Complete 30 juz memorization with daily review, consolidation, and certified ijazah.</p></div>
-      <div class="feature-card"><div class="feature-icon">🎵</div><h4>Tajweed & Recitation</h4><p>Correct tajweed rules (Hafs 'an 'Āsim) with oral examination.</p></div>
-      <div class="feature-card"><div class="feature-icon">📚</div><h4>Islamic Studies</h4><p>Aqeedah, fiqh, seerah, and hadith to ground students in authentic deen.</p></div>
-      <div class="feature-card"><div class="feature-icon">🌟</div><h4>Character Formation</h4><p>Mentorship and akhlaq befitting a Hafiz of Allāh's Noble Book.</p></div>
+      <div class="feature-card"><div class="feature-icon">📖</div><h4 data-i18n="feature1_title">Qur'an Memorization (Hifz)</h4><p data-i18n="feature1_desc">Complete 30 juz memorization with daily review, consolidation, and certified ijazah.</p></div>
+      <div class="feature-card"><div class="feature-icon">🎵</div><h4 data-i18n="feature2_title">Tajweed & Recitation</h4><p data-i18n="feature2_desc">Correct tajweed rules (Hafs 'an 'Āsim) with oral examination.</p></div>
+      <div class="feature-card"><div class="feature-icon">📚</div><h4 data-i18n="feature3_title">Islamic Studies</h4><p data-i18n="feature3_desc">Aqeedah, fiqh, seerah, and hadith to ground students in authentic deen.</p></div>
+      <div class="feature-card"><div class="feature-icon">🌟</div><h4 data-i18n="feature4_title">Character Formation</h4><p data-i18n="feature4_desc">Mentorship and akhlaq befitting a Hafiz of Allāh's Noble Book.</p></div>
     </div>
   </div>
 </div>
@@ -423,22 +457,22 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
     <div class="rules-card">
       <div class="rules-header">
         <div style="font-size:2.5rem;margin-bottom:.5rem;">📜</div>
-        <h2>School Rules & Regulations</h2>
+        <h2 data-i18n="rules_title">School Rules & Regulations</h2>
         <p>Mu'assasatu Sheikh Muhammad Rabi'u · MSMR Kano</p>
       </div>
       <div class="rules-body">
-        <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><h4>Punctuality</h4><p>All students must arrive on time for every session. Lateness of more than 15 minutes without a valid excuse will be recorded.</p></div></div>
-        <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><h4>Respect & Conduct</h4><p>Students must show respect to all teachers, staff, and fellow students at all times, inside and outside the school premises.</p></div></div>
-        <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><h4>Qur'an Handling</h4><p>The Qur'an must always be handled with respect — in a state of wudhu, placed on a clean surface, and never put on the floor.</p></div></div>
-        <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><h4>Daily Memorization</h4><p>Every student is expected to memorize their daily portion (wird) and present it to their teacher. Consistent failure will be noted.</p></div></div>
-        <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><h4>Mobile Phones</h4><p>Mobile phones must be switched off or on silent during all classes and Qur'an sessions. Unauthorized use is prohibited.</p></div></div>
-        <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><h4>Dress Code</h4><p>All students must dress modestly and appropriately in Islamic attire. No tight, transparent, or inappropriate clothing is allowed.</p></div></div>
-        <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><h4>Attendance</h4><p>Minimum 85% attendance is required. Absences must be reported in advance. Unexplained absences may result in dismissal.</p></div></div>
-        <div class="rule-item"><div class="rule-num">8</div><div class="rule-text"><h4>Part-Time (Biye) Students</h4><p>Biye students must attend all Saturday and Sunday sessions without fail. Weekend-only absences follow the same attendance policy.</p></div></div>
-        <div class="rule-item"><div class="rule-num">9</div><div class="rule-text"><h4>Cleanliness</h4><p>Students are responsible for keeping their space clean. Littering on school premises is strictly prohibited.</p></div></div>
-        <div class="rule-item"><div class="rule-num">10</div><div class="rule-text"><h4>Academic Integrity</h4><p>Cheating, impersonation, or falsifying memorization progress is a serious offence and may result in immediate expulsion.</p></div></div>
+        <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><h4 data-i18n="rule1_title">Punctuality</h4><p data-i18n="rule1_desc">All students must arrive on time for every session. Lateness of more than 15 minutes without a valid excuse will be recorded.</p></div></div>
+        <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><h4 data-i18n="rule2_title">Respect & Conduct</h4><p data-i18n="rule2_desc">Students must show respect to all teachers, staff, and fellow students at all times, inside and outside the school premises.</p></div></div>
+        <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><h4 data-i18n="rule3_title">Qur'an Handling</h4><p data-i18n="rule3_desc">The Qur'an must always be handled with respect — in a state of wudhu, placed on a clean surface, and never put on the floor.</p></div></div>
+        <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><h4 data-i18n="rule4_title">Daily Memorization</h4><p data-i18n="rule4_desc">Every student is expected to memorize their daily portion (wird) and present it to their teacher. Consistent failure will be noted.</p></div></div>
+        <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><h4 data-i18n="rule5_title">Mobile Phones</h4><p data-i18n="rule5_desc">Mobile phones must be switched off or on silent during all classes and Qur'an sessions. Unauthorized use is prohibited.</p></div></div>
+        <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><h4 data-i18n="rule6_title">Dress Code</h4><p data-i18n="rule6_desc">All students must dress modestly and appropriately in Islamic attire. No tight, transparent, or inappropriate clothing is allowed.</p></div></div>
+        <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><h4 data-i18n="rule7_title">Attendance</h4><p data-i18n="rule7_desc">Minimum 85% attendance is required. Absences must be reported in advance. Unexplained absences may result in dismissal.</p></div></div>
+        <div class="rule-item"><div class="rule-num">8</div><div class="rule-text"><h4 data-i18n="rule8_title">Part-Time (Biye) Students</h4><p data-i18n="rule8_desc">Biye students must attend all Saturday and Sunday sessions without fail. Weekend-only absences follow the same attendance policy.</p></div></div>
+        <div class="rule-item"><div class="rule-num">9</div><div class="rule-text"><h4 data-i18n="rule9_title">Cleanliness</h4><p data-i18n="rule9_desc">Students are responsible for keeping their space clean. Littering on school premises is strictly prohibited.</p></div></div>
+        <div class="rule-item"><div class="rule-num">10</div><div class="rule-text"><h4 data-i18n="rule10_title">Academic Integrity</h4><p data-i18n="rule10_desc">Cheating, impersonation, or falsifying memorization progress is a serious offence and may result in immediate expulsion.</p></div></div>
         <div style="margin-top:1.5rem;padding:1rem;background:rgba(245,158,11,.1);border-radius:10px;border-left:4px solid var(--gold);">
-          <p style="font-size:13px;color:var(--gray-700);line-height:1.7;">🤲 <strong>By registering, students and their guardians agree to abide by all these rules.</strong> The school reserves the right to amend these rules with notice to students and guardians.</p>
+          <p style="font-size:13px;color:var(--gray-700);line-height:1.7;" data-i18n="rules_note">🤲 <strong>By registering, students and their guardians agree to abide by all these rules.</strong> The school reserves the right to amend these rules with notice to students and guardians.</p>
         </div>
       </div>
     </div>
@@ -632,11 +666,12 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
       <div class="card-header"><div class="card-icon">🔑</div><h2>Create Your Account</h2><p>You'll use this to check your interview slip 🎫</p></div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">Username *</label>
-          <input class="form-control" id="r-username" type="text" placeholder="Choose a username" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_.]/g,'')"/>
-          <div class="error-msg" id="e-username"></div>
-          <div class="suggest-chips" id="username-chips"></div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;">💡 Click a suggestion or type your own (letters, numbers, _ . only)</div>
+          <label class="form-label">🎓 Your Admission Number</label>
+          <div style="background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span id="r-admission-display" style="font-size:1.3rem;font-weight:800;letter-spacing:.05em;font-family:monospace;">MSMR-XXXXX</span>
+            <button type="button" onclick="copyAdmissionNo()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">📋 Copy</button>
+          </div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;">💡 This is auto-generated and cannot be changed. Save it — you'll use it with your password to check your interview slip.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Password *</label>
@@ -716,10 +751,10 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
           </div>
         </div>
         <div id="student-login-form">
-          <div class="fun-tip">🔑 <strong>Enter your username and password</strong> that you created during registration.</div>
+          <div class="fun-tip">🔑 <strong>Enter your Admission No. and password</strong> that you were given during registration.</div>
           <div class="form-group">
-            <label class="form-label">👤 Username</label>
-            <input class="form-control" id="login-username" type="text" placeholder="Your username"/>
+            <label class="form-label">🎓 Admission No.</label>
+            <input class="form-control" id="login-admission" type="text" placeholder="e.g. MSMR-A1B2C" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="form-group">
             <label class="form-label">🔑 Password</label>
@@ -800,6 +835,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
       <div class="sidebar-title">Dashboard</div>
       <div class="sidebar-item active" onclick="showPanel('students',this)"><span>👥</span>Students<span class="sidebar-badge" id="sidebar-count">0</span></div>
       <div class="sidebar-item" onclick="showPanel('approve',this)"><span>✅</span>Bulk Approve<span class="sidebar-badge" id="sidebar-pending">0</span></div>
+      <div class="sidebar-item" onclick="showPanel('flagged',this)"><span>🚩</span>Flagged<span class="sidebar-badge" id="sidebar-flagged">0</span></div>
       <div class="sidebar-item" onclick="showPanel('notices',this)"><span>📋</span>Notices</div>
       <div class="sidebar-item" onclick="showPanel('admins',this)"><span>🛡️</span>Admins</div>
       <div class="sidebar-item" onclick="showPanel('settings',this)"><span>⚙️</span>Settings</div>
@@ -812,7 +848,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         <div class="panel-title">👥 All Registered Students</div>
         <div class="panel-sub">Full list of registered applicants.</div>
         <div class="toolbar">
-          <input class="search-input" id="search-input" type="text" placeholder="🔍 Search name, username, phone…" oninput="renderStudents()"/>
+          <input class="search-input" id="search-input" type="text" placeholder="🔍 Search name, admission no, phone…" oninput="renderStudents()"/>
           <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
           <button class="filter-btn" onclick="setFilter('approved',this)">✅ Approved</button>
           <button class="filter-btn" onclick="setFilter('pending',this)">⏳ Pending</button>
@@ -822,7 +858,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Photo</th><th>Name</th><th>Username</th><th>Phone</th><th>Programme</th><th>Gender</th><th>State</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Photo</th><th>Name</th><th>Admission No.</th><th>Phone</th><th>Programme</th><th>Gender</th><th>State</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="students-tbody"><tr><td colspan="9"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
@@ -861,6 +897,18 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
           <table>
             <thead><tr><th><input type="checkbox" id="check-all" onchange="toggleAllCheck(this)"/></th><th>Photo</th><th>Name</th><th>Programme</th><th>Phone</th><th>Status</th></tr></thead>
             <tbody id="approve-tbody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Flagged Duplicates Panel -->
+      <div class="admin-panel" id="panel-flagged">
+        <div class="panel-title">🚩 Flagged Possible Duplicates</div>
+        <div class="panel-sub">Registrations auto-flagged for matching name/DOB, guardian phone, or face photo. Review and decide — nothing is blocked automatically.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>New Registration</th><th>Reason Flagged</th><th>Possible Match</th><th>Actions</th></tr></thead>
+            <tbody id="flagged-tbody"><tr><td colspan="4"><div class="spinner"></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -949,6 +997,32 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
   </div>
 </div>
 
+<!-- AI FAQ CHAT WIDGET -->
+<button class="ai-chat-fab" id="ai-chat-fab" onclick="toggleAiChat()">🤖<span class="fab-dot"></span></button>
+<div class="ai-chat-panel" id="ai-chat-panel">
+  <div class="ai-chat-head">
+    <div>🕌</div>
+    <div>
+      <strong>MSMR Assistant</strong>
+      <span>Ask about admissions</span>
+    </div>
+    <button class="ai-chat-close" onclick="toggleAiChat()">✕</button>
+  </div>
+  <div class="ai-chat-body" id="ai-chat-body">
+    <div class="ai-msg bot">Assalamu alaikum 👋 I can answer quick questions about MSMR admissions — fees, age, programme, how to check your slip, and school rules. What would you like to know?</div>
+  </div>
+  <div class="ai-chip-row" id="ai-chip-row">
+    <div class="ai-chip" onclick="aiAsk('Is it free?')">💰 Is it free?</div>
+    <div class="ai-chip" onclick="aiAsk('What age can join?')">🎂 Age requirement</div>
+    <div class="ai-chip" onclick="aiAsk('How do I register?')">📝 How to register</div>
+    <div class="ai-chip" onclick="aiAsk('How do I check my slip?')">🎫 Check my slip</div>
+  </div>
+  <div class="ai-chat-input-row">
+    <input type="text" id="ai-chat-input" placeholder="Type your question…" onkeydown="if(event.key==='Enter')aiSend()"/>
+    <button class="ai-chat-send" onclick="aiSend()">➤</button>
+  </div>
+</div>
+
 <script>
 // ── State ────────────────────────────
 let allStudents=[],currentFilter='all',editingId=null,loginType='student';
@@ -959,7 +1033,8 @@ const LOGO_SRC='data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('header-logo').src=LOGO_SRC;
   document.getElementById('slip-logo').src=LOGO_SRC;
-  generateUsernameSuggestions();
+  document.getElementById('hero-logo').src=LOGO_SRC;
+  newAdmissionNo();
   generatePasswordSuggestions();
 });
 
@@ -1000,7 +1075,7 @@ function showPage(name){
 
 function resetLoginPage(){
   document.getElementById('slip-container').style.display='none';
-  document.getElementById('login-username').value='';
+  document.getElementById('login-admission').value='';
   document.getElementById('login-password').value='';
   document.getElementById('err-login').textContent='';
   document.getElementById('admin-pwd').value='';
@@ -1032,7 +1107,7 @@ function goStep(n){
     if(i===n)s.classList.add('active');
   }
   currentStep=n;
-  if(n===5){generateUsernameSuggestions();generatePasswordSuggestions();}
+  if(n===5){newAdmissionNo();generatePasswordSuggestions();}
 }
 
 function validateStep(n){
@@ -1059,32 +1134,74 @@ function validateStep(n){
     err('e-kin-address',!document.getElementById('r-kin-address').value.trim()?'Guardian address is required':'');
   }
   if(n===5){
-    const u=document.getElementById('r-username').value.trim();
     const p=document.getElementById('r-password').value;
-    err('e-username',!u?'Username is required':u.length<3?'Username too short':'');
     err('e-password',!p?'Password is required':p.length<6?'Password must be at least 6 characters':'');
   }
   return ok;
 }
 
-// ── Username/password suggestions ─────
-function generateUsernameSuggestions(){
-  const name=document.getElementById('r-name').value.trim().split(' ')[0].toLowerCase()||'student';
-  const clean=name.replace(/[^a-z]/g,'');
-  const options=[
-    clean+Math.floor(Math.random()*99+1),
-    clean+'_msmr',
-    'hafiz_'+clean,
-    clean+'.kano',
-    'msmr_'+clean,
-    clean+'_'+new Date().getFullYear()
-  ];
-  document.getElementById('username-chips').innerHTML=options.map(o=>`<div class="chip" onclick="document.getElementById('r-username').value='${o}'">${o}</div>`).join('');
+// ── Admission number (auto-generated, replaces username) ─
+let currentAdmissionNo=genId();
+function newAdmissionNo(){
+  currentAdmissionNo=genId();
+  const el=document.getElementById('r-admission-display');
+  if(el)el.textContent=currentAdmissionNo;
+}
+function copyAdmissionNo(){
+  navigator.clipboard?.writeText(currentAdmissionNo).then(()=>toast('📋 Copied: '+currentAdmissionNo)).catch(()=>{});
 }
 
 function generatePasswordSuggestions(){
   const words=['Bismillah1','Hafiz2025','Quran786','Kano2025','MSMR786','Hifz1447'];
   document.getElementById('pwd-chips').innerHTML=words.map(w=>`<div class="chip" onclick="document.getElementById('r-password').value='${w}'">${w}</div>`).join('');
+}
+
+// ── Face Recognition (duplicate detection) ─
+const FACE_MODEL_URL='https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights';
+let faceModelsReady=false;
+const faceModelsPromise=(async()=>{
+  try{
+    await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL);
+    faceModelsReady=true;
+  }catch(e){console.warn('⚠️ Face-recognition models failed to load (duplicate photo-check will be skipped):',e);}
+})();
+
+async function computeFaceDescriptor(dataUrl){
+  if(!dataUrl||!faceModelsReady)return null;
+  try{
+    const img=new Image();
+    img.src=dataUrl;
+    await img.decode();
+    const result=await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    return result?Array.from(result.descriptor):null;
+  }catch(e){console.warn('Face descriptor could not be computed:',e);return null;}
+}
+
+// Compares a new registrant against existing students by name+DOB, guardian/phone, and face similarity.
+// NOTE: this fetches the existing students list client-side, which works well up to a few thousand
+// records but is not a scalable approach at truly massive scale (e.g. 1,000,000+ students) — a server-side
+// check (Postgres function / edge function) would be needed at that size.
+async function checkDuplicate(descriptor,name,dob,kinPhone,phone){
+  try{
+    const existing=await sbSelect('students','select=id,student_id,full_name,dob,kin_phone,phone,face_descriptor,photo_data');
+    const normName=(name||'').trim().toLowerCase();
+    for(const s of existing){
+      const reasons=[];
+      if(normName&&s.full_name&&s.full_name.trim().toLowerCase()===normName&&dob&&s.dob===dob)reasons.push('Same name & date of birth');
+      if(kinPhone&&s.kin_phone&&s.kin_phone===kinPhone)reasons.push('Same guardian phone number');
+      if(phone&&s.phone&&s.phone===phone)reasons.push('Same phone number');
+      if(descriptor&&s.face_descriptor){
+        try{
+          const dist=faceapi.euclideanDistance(descriptor,s.face_descriptor);
+          if(dist<0.6)reasons.push('Face photo closely matches an existing student');
+        }catch(e){}
+      }
+      if(reasons.length)return{matched:true,reason:reasons.join(' + '),matchId:s.student_id,matchName:s.full_name,matchPhoto:s.photo_data};
+    }
+  }catch(e){console.error('Duplicate check failed:',e);}
+  return{matched:false};
 }
 
 // ── Camera ───────────────────────────
@@ -1147,43 +1264,68 @@ async function submitRegistration(){
   }
   document.getElementById('e-agree').textContent='';
   const btn=document.getElementById('reg-btn');
-  btn.textContent='⏳ Submitting…';btn.classList.add('loading');
+  btn.textContent='🔎 Checking details…';btn.classList.add('loading');
   try{
+    const name=document.getElementById('r-name').value.trim();
+    const dob=document.getElementById('r-dob').value;
+    const phone=document.getElementById('r-phone').value.trim()||null;
+    const kinPhone=document.getElementById('r-kin-phone').value.trim();
+
+    // give face models a moment to finish loading, but don't block forever
+    await Promise.race([faceModelsPromise,new Promise(res=>setTimeout(res,4000))]);
+    const descriptor=await computeFaceDescriptor(capturedPhoto);
+
+    const dup=await checkDuplicate(descriptor,name,dob,kinPhone,phone);
+
+    btn.textContent='⏳ Submitting…';
     await sbInsert('students',{
-      student_id:genId(),
-      full_name:document.getElementById('r-name').value.trim(),
-      dob:document.getElementById('r-dob').value,
-      phone:document.getElementById('r-phone').value.trim()||null,
+      student_id:currentAdmissionNo,
+      full_name:name,
+      dob:dob,
+      phone:phone,
       photo_data:capturedPhoto,
+      face_descriptor:descriptor,
       program:document.getElementById('r-program').value,
       gender:document.getElementById('r-gender').value,
       state:document.getElementById('r-state').value,
       lga:document.getElementById('r-lga').value.trim(),
       address:document.getElementById('r-address').value.trim(),
       illness:document.getElementById('r-illness').value.trim()||null,
-      username:document.getElementById('r-username').value.trim(),
       password:document.getElementById('r-password').value,
       email:document.getElementById('r-email').value.trim()||null,
       kin_name:document.getElementById('r-kin-name').value.trim(),
+      kin_phone:kinPhone,
       kin_email:document.getElementById('r-kin-email').value.trim()||null,
       kin_relationship:document.getElementById('r-kin-rel').value,
       kin_address:document.getElementById('r-kin-address').value.trim(),
-      interview_date:'',interview_time:'',venue:'',approved:false
+      interview_date:'',interview_time:'',venue:'',approved:false,
+      flagged_duplicate:dup.matched,
+      duplicate_reason:dup.matched?dup.reason:null,
+      duplicate_match_id:dup.matched?dup.matchId:null,
+      duplicate_match_name:dup.matched?dup.matchName:null
     });
     spawnEmoji(['🎉','🤲','📖','✨','🌟','🕌','🎊']);
-    toast('🎉 Registration successful! Use your username & password to check your slip.');
+    toast('🎉 Registration successful! Your Admission No. is '+currentAdmissionNo+' — use it with your password to check your slip.');
     goStep(1);
-    setTimeout(()=>resetRegForm(),1500);
+    setTimeout(()=>{resetRegForm();newAdmissionNo();},1500);
     loadStudentCount();
   }catch(e){
-    const msg=e.message||'';
-    if(msg.includes('username'))toast('❌ That username is already taken. Please choose another.','error');
-    else toast('❌ Registration failed. Please try again.','error');
+    let raw=e.message||'';
+    let friendly='Registration failed. Please try again.';
+    try{
+      const parsed=JSON.parse(raw);
+      raw=parsed.message||raw;
+      if(/student_id/i.test(raw))friendly='That Admission No. was just taken — please go back and try submitting again.';
+      else if(/column .* does not exist/i.test(raw))friendly='Server setup incomplete (missing database column). Please tell the admin to run the latest migration.';
+      else if(raw)friendly=raw;
+    }catch(_){/* not JSON, use raw as-is if present */ if(raw)friendly=raw;}
+    console.error('Registration error (full detail):',raw);
+    toast('❌ '+friendly,'error');
   }finally{btn.textContent='🚀 Submit Application!';btn.classList.remove('loading');}
 }
 
 function resetRegForm(){
-  ['r-name','r-dob','r-phone','r-lga','r-address','r-illness','r-username','r-password','r-email','r-kin-name','r-kin-email','r-kin-address'].forEach(id=>{
+  ['r-name','r-dob','r-phone','r-lga','r-address','r-illness','r-password','r-email','r-kin-name','r-kin-email','r-kin-address'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   ['r-gender','r-state','r-program','r-kin-rel'].forEach(id=>{
@@ -1200,15 +1342,15 @@ function resetRegForm(){
 
 // ── STUDENT LOGIN ─────────────────────
 async function doStudentLogin(){
-  const username=document.getElementById('login-username').value.trim();
+  const admission=document.getElementById('login-admission').value.trim();
   const password=document.getElementById('login-password').value;
   document.getElementById('err-login').textContent='';
-  if(!username||!password){document.getElementById('err-login').innerHTML='⚠️ Please enter username and password.';return;}
+  if(!admission||!password){document.getElementById('err-login').innerHTML='⚠️ Please enter your Admission No. and password.';return;}
   const btn=document.getElementById('login-btn');btn.textContent='🔍 Searching…';btn.classList.add('loading');
   try{
-    const rows=await sbSelect('students',`username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}`);
+    const rows=await sbSelect('students',`student_id=eq.${encodeURIComponent(admission)}&password=eq.${encodeURIComponent(password)}`);
     if(rows&&rows.length>0){showSlip(rows[0]);spawnEmoji(['🎫','✨','📋','🌟']);}
-    else document.getElementById('err-login').innerHTML='❌ Incorrect username or password.';
+    else document.getElementById('err-login').innerHTML='❌ Incorrect Admission No. or password.';
   }catch(e){document.getElementById('err-login').innerHTML='❌ Connection error. Try again.';}
   finally{btn.textContent='🎫 View My Interview Slip';btn.classList.remove('loading');}
 }
@@ -1262,13 +1404,14 @@ async function loadStudents(){
   document.getElementById('approve-tbody').innerHTML='<tr><td colspan="6"><div class="spinner"></div></td></tr>';
   try{
     allStudents=await sbSelect('students','order=registered_at.desc')||[];
-    renderStudents();renderApproveTable();updateSidebarCounts();
+    renderStudents();renderApproveTable();renderFlagged();updateSidebarCounts();
   }catch(e){document.getElementById('students-tbody').innerHTML='<tr><td colspan="9" class="no-data">❌ Failed to load data.</td></tr>';}
 }
 
 function updateSidebarCounts(){
   document.getElementById('sidebar-count').textContent=allStudents.length;
   document.getElementById('sidebar-pending').textContent=allStudents.filter(s=>!s.approved).length;
+  document.getElementById('sidebar-flagged').textContent=allStudents.filter(s=>s.flagged_duplicate).length;
 }
 
 let studentFilter='all';
@@ -1282,7 +1425,7 @@ function renderStudents(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
   let list=allStudents.filter(s=>
     (s.full_name||'').toLowerCase().includes(q)||
-    (s.username||'').toLowerCase().includes(q)||
+    (s.student_id||'').toLowerCase().includes(q)||
     (s.phone||'').includes(q)
   );
   if(studentFilter==='approved')list=list.filter(s=>s.approved);
@@ -1293,7 +1436,7 @@ function renderStudents(){
     <tr>
       <td>${s.photo_data?`<img class="student-thumb" src="${s.photo_data}" alt="photo"/>`:`<div class="student-avatar">${(s.full_name||'?')[0]}</div>`}</td>
       <td><strong>${s.full_name||'—'}</strong><br/><span style="font-size:11px;color:var(--gray-400);">${s.dob||''}</span></td>
-      <td>${s.username||'—'}</td>
+      <td>${s.student_id||'—'}</td>
       <td>${s.phone||'<em style="color:var(--gray-400)">—</em>'}</td>
       <td><span class="badge badge-program">${s.program||'—'}</span></td>
       <td>${s.gender||'—'}</td>
@@ -1319,6 +1462,34 @@ function renderApproveTable(){
       <td><span class="badge badge-pending">⏳ Pending</span></td>
     </tr>`).join('');
   document.querySelectorAll('.approve-check').forEach(c=>c.addEventListener('change',updateSelectedCount));
+}
+
+function renderFlagged(){
+  const flagged=allStudents.filter(s=>s.flagged_duplicate);
+  if(!flagged.length){document.getElementById('flagged-tbody').innerHTML='<tr><td colspan="4" class="no-data">🚩 No flagged registrations right now.</td></tr>';return;}
+  document.getElementById('flagged-tbody').innerHTML=flagged.map(s=>{
+    const match=allStudents.find(x=>x.student_id===s.duplicate_match_id);
+    return `
+    <tr>
+      <td>
+        ${s.photo_data?`<img class="student-thumb" src="${s.photo_data}"/>`:`<div class="student-avatar">${(s.full_name||'?')[0]}</div>`}
+        <br/><strong>${s.full_name||'—'}</strong><br/><span style="font-size:11px;color:var(--gray-400);">${s.dob||''}</span>
+      </td>
+      <td style="font-size:12px;color:var(--gray-600);">${s.duplicate_reason||'—'}</td>
+      <td>
+        ${match?`${match.photo_data?`<img class="student-thumb" src="${match.photo_data}"/>`:''}<br/><strong>${match.full_name||'—'}</strong>`:(s.duplicate_match_name||'—')}
+      </td>
+      <td>
+        <button class="btn-save" onclick="clearFlag('${s.id}')">✅ Not a duplicate</button>
+        <button class="btn-delete" onclick="deleteStudent('${s.id}','${(s.full_name||'').replace(/'/g,"\\'")}')" >🗑️ Remove</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function clearFlag(id){
+  try{await sbUpdate('students',`id=eq.${id}`,{flagged_duplicate:false});toast('✅ Cleared — no longer flagged.');loadStudents();}
+  catch(e){toast('❌ Could not update. Try again.','error');}
 }
 
 function updateSelectedCount(){
@@ -1506,14 +1677,15 @@ function showPanel(name,el){
   el.classList.add('active');
   if(name==='admins')loadAdmins();
   if(name==='notices')loadNoticesAdmin();
+  if(name==='flagged')renderFlagged();
   if(name==='settings'){loadAdminSettings();loadStats();}
 }
 function adminLogout(){showPage('home');toast('👋 Logged out.');}
 
 // ── CSV EXPORT ────────────────────────
 function exportCSV(){
-  const h=['ID','Name','DOB','Phone','Programme','Gender','State','LGA','Username','Guardian','Relationship','Status','Interview Date','Venue'];
-  const rows=allStudents.map(s=>[s.student_id,s.full_name,s.dob,s.phone,s.program,s.gender,s.state,s.lga,s.username,s.kin_name,s.kin_relationship,s.approved?'Approved':'Pending',s.interview_date,s.venue].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
+  const h=['Admission No.','Name','DOB','Phone','Programme','Gender','State','LGA','Guardian','Guardian Phone','Relationship','Status','Interview Date','Venue'];
+  const rows=allStudents.map(s=>[s.student_id,s.full_name,s.dob,s.phone,s.program,s.gender,s.state,s.lga,s.kin_name,s.kin_phone,s.kin_relationship,s.approved?'Approved':'Pending',s.interview_date,s.venue].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
   const csv=[h,...rows].map(r=>r.join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='msmr_students_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
@@ -1547,6 +1719,47 @@ document.addEventListener('keydown',e=>{
   if(ap==='page-login'){loginType==='student'?doStudentLogin():doAdminLogin();}
 });
 document.getElementById('edit-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ── AI FAQ CHAT WIDGET ────────────────
+const AI_FAQ=[
+  {kw:['free','fee','cost','pay','money','sadaqah'],a:'MSMR is 100% free — no registration or tuition fees. The school may occasionally invite voluntary contributions for special events, but this is never required. 💰'},
+  {kw:['age','old','15','young'],a:'The programme is open to students aged 15 and above. 🎂'},
+  {kw:['register','apply','sign up','join','admission'],a:'Tap "Apply Now — It\'s Free!" on the home page and follow the 6 steps: Personal info → Photo → Programme → Next of Kin → Account → Agreement. It takes about 5 minutes. 📝'},
+  {kw:['slip','check my slip','interview','login','username','password','admission'],a:'Tap "Login" in the top menu, choose "Student", then enter the Admission No. and password you were given during registration to view your interview slip. 🎫'},
+  {kw:['rule','rules','regulation','conduct','dress','attendance'],a:'You can read the full School Rules & Regulations on the "Rules" page in the menu — covering punctuality, conduct, Qur\'an handling, dress code, attendance and more. 📜'},
+  {kw:['programme','program','hadda','biye','full time','part time','schedule','days'],a:'There are two tracks: 📅 Hadda (Full-Time, Mon–Fri) and 🌿 Biye (Part-Time, Sat & Sun only — ideal for students still in school). You choose during registration.'},
+  {kw:['hifz','memoriz','quran','qur\'an','tajweed','juz'],a:'MSMR offers a free one-year Hifz (Qur\'an memorization) programme covering all 30 juz, with tajweed, daily review and an ijazah on completion. 📖'},
+  {kw:['address','location','where','kano'],a:'MSMR is located at No. 1 Sheikh Muhammad Rabi\'u Road, Kano, Nigeria. 📍'},
+  {kw:['contact','phone','call','whatsapp','reach'],a:'For direct contact, please use the phone number provided during your registration process, or ask a staff member at the school premises. 📞'},
+  {kw:['duration','long','year','how many'],a:'The Hifz programme runs for 1 year of full daily sessions (or the equivalent part-time schedule for Biye students). 📅'}
+];
+function aiFindReply(msg){
+  const m=msg.toLowerCase();
+  for(const item of AI_FAQ){ if(item.kw.some(k=>m.includes(k))) return item.a; }
+  return "I don't have a specific answer for that yet 🙏. Please try the quick questions above, check the Rules page, or contact the school directly for detailed help.";
+}
+function aiAppendMsg(text,who){
+  const body=document.getElementById('ai-chat-body');
+  const div=document.createElement('div');
+  div.className='ai-msg '+who;
+  div.textContent=text;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+function aiAsk(question){
+  aiAppendMsg(question,'user');
+  setTimeout(()=>aiAppendMsg(aiFindReply(question),'bot'),350);
+}
+function aiSend(){
+  const input=document.getElementById('ai-chat-input');
+  const val=input.value.trim();
+  if(!val)return;
+  input.value='';
+  aiAsk(val);
+}
+function toggleAiChat(){
+  document.getElementById('ai-chat-panel').classList.toggle('open');
+}
 
 // ── BOOT ──────────────────────────────
 loadSettings();
