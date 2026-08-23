@@ -6,6 +6,7 @@
 <title>MSMR Kano – Admission Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
   --navy:#1e3a8a;--navy-dark:#1e2d6b;--navy-light:#2d4ba0;
@@ -56,16 +57,36 @@ nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
 .hero{position:relative;min-height:360px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .5s;opacity:0;}
 .hero-bg.loaded{opacity:1;}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(30,58,138,.55),rgba(30,58,138,.85));}
+.hero-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:3;}
+.hero-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0;}
+.hero-dot.active{background:var(--gold);transform:scale(1.25);}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(30,58,138,.22),rgba(30,58,138,.5));}
 .hero-content{position:relative;z-index:2;text-align:center;padding:3rem 1.5rem;color:#fff;}
-.hero-content h2{font-family:'Amiri',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;margin-bottom:.5rem;}
+.hero-content h2{font-family:'Amiri',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;margin-bottom:.5rem;text-shadow:0 2px 12px rgba(0,0,0,.55);}
 .hero-arabic{font-family:'Amiri',serif;font-size:1.3rem;color:rgba(255,255,255,.6);direction:rtl;margin-bottom:1rem;}
-.hero-content p{font-size:1rem;color:rgba(255,255,255,.8);line-height:1.75;max-width:560px;margin:0 auto 1.5rem;}
+.hero-content p{font-size:1rem;color:rgba(255,255,255,.9);line-height:1.75;max-width:560px;margin:0 auto 1.5rem;text-shadow:0 1px 8px rgba(0,0,0,.5);}
 .hero-cta{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;}
 .btn-primary{background:var(--gold);color:var(--navy-dark);padding:.75rem 1.75rem;border-radius:8px;font-weight:700;font-size:14px;border:none;transition:all .2s;box-shadow:0 4px 12px rgba(245,158,11,.4);}
 .btn-primary:hover{background:var(--gold-dark);transform:translateY(-2px);}
 .btn-secondary{background:rgba(255,255,255,.15);color:#fff;padding:.75rem 1.75rem;border-radius:8px;font-weight:500;font-size:14px;border:1.5px solid rgba(255,255,255,.4);transition:all .2s;}
 .btn-secondary:hover{background:rgba(255,255,255,.25);}
+
+.chip.illness-chip.selected{background:var(--navy);border-color:var(--navy);color:#fff;}
+.yesno-btn{flex:1;padding:.75rem 1rem;border-radius:10px;border:2px solid var(--gray-200);background:#fff;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;color:var(--gray-600);}
+.yesno-btn:hover{border-color:var(--navy);}
+.yesno-btn.selected{border-color:var(--navy);background:var(--navy);color:#fff;}
+
+/* ── LIVE VIDEO CLASS ── */
+.live-banner{display:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 20px;border-radius:12px;margin:1.25rem auto 0;max-width:640px;align-items:center;justify-content:space-between;gap:14px;box-shadow:0 8px 24px rgba(220,38,38,.35);}
+.live-banner-btn{background:#fff;color:#b91c1c;border:none;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;}
+.live-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.25rem;}
+.live-tile{position:relative;background:#111;border-radius:12px;overflow:hidden;aspect-ratio:4/3;}
+.live-tile video{width:100%;height:100%;object-fit:cover;}
+.live-name-tag{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:3px 10px;border-radius:999px;}
+.hand-badge{position:absolute;top:6px;right:6px;background:#f59e0b;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.live-controls{display:flex;justify-content:center;gap:14px;}
+.live-controls button{width:52px;height:52px;border-radius:50%;border:none;font-size:20px;cursor:pointer;background:var(--gray-200);}
+.live-leave-btn{background:#dc2626!important;color:#fff;}
 
 /* ── ADMISSIONS BADGE ── */
 .admissions-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);border:1.5px solid var(--gold);color:var(--gold-light);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:999px;margin-bottom:1.1rem;}
@@ -167,8 +188,13 @@ nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
 .photo-capture-box{border:2px dashed var(--gray-200);border-radius:12px;padding:1.25rem;text-align:center;background:var(--gray-50);transition:border-color .2s;}
 .photo-capture-box:hover{border-color:var(--navy);}
 #camera-preview{width:100%;max-width:260px;border-radius:10px;display:none;margin:0 auto .75rem;border:3px solid var(--navy);}
+.face-guide-oval{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);width:58%;height:72%;border:3px dashed rgba(255,255,255,.9);border-radius:50%;pointer-events:none;box-shadow:0 0 0 3px rgba(30,58,138,.4);}
 #photo-canvas{display:none;}
-#photo-thumb{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);display:none;margin:0 auto .75rem;box-shadow:0 4px 12px rgba(30,58,138,.2);}
+#photo-thumb{width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);display:none;margin:0 auto .5rem;box-shadow:0 4px 12px rgba(30,58,138,.2);cursor:pointer;}
+.photo-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:900;align-items:center;justify-content:center;padding:24px;}
+.photo-lightbox.open{display:flex;}
+.photo-lightbox img{max-width:92vw;max-height:80vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.photo-lightbox-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(255,255,255,.15);padding:8px 16px;border-radius:999px;}
 .camera-btn{background:var(--navy);color:#fff;border:none;padding:.55rem 1rem;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;margin:.25rem;}
 .camera-btn:hover{background:var(--navy-dark);}
 .camera-btn.red{background:var(--red);}
@@ -210,7 +236,7 @@ nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
 .btn-next:hover{background:var(--navy-dark);}
 
 /* ── LOGIN ── */
-.login-options{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.login-options{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.6rem;margin-bottom:1.5rem;}
 .login-option-btn{background:#fff;border:2px solid var(--gray-200);border-radius:12px;padding:1.25rem 1rem;text-align:center;cursor:pointer;transition:all .2s;}
 .login-option-btn:hover{border-color:var(--navy);background:rgba(30,58,138,.03);}
 .login-option-btn.selected{border-color:var(--navy);background:rgba(30,58,138,.07);}
@@ -330,12 +356,18 @@ tbody td{padding:.75rem 1rem;font-size:12px;color:var(--gray-800);}
 @media print{
   body *{visibility:hidden !important;}
   #print-area,#print-area *{visibility:visible !important;}
-  #print-area{position:fixed !important;inset:0 !important;background:#fff !important;padding:15px !important;z-index:99999 !important;display:flex;align-items:center;justify-content:center;}
-  .slip{max-width:520px !important;margin:0 auto !important;border:2px solid #1e3a8a !important;box-shadow:none !important;}
+  #print-area{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;background:#fff !important;padding:0 !important;margin:0 !important;}
+  .slip{max-width:100% !important;width:100% !important;margin:0 !important;border:2px solid #1e3a8a !important;box-shadow:none !important;page-break-inside:avoid !important;break-inside:avoid !important;}
   .slip-header{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
   .slip-gold-bar{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;background:#f59e0b !important;}
   .slip-actions,.nav-btn,header,#notif-banner,.hot-modal-box{display:none !important;}
-  @page{size:A5 landscape;margin:.8cm;}
+  @page{size:A4 portrait;margin:1.2cm;}
+}
+body.printing-report-card #report-card-print-area{display:block;}
+@media print{
+  body.printing-report-card *{visibility:hidden !important;}
+  body.printing-report-card #report-card-print-area,body.printing-report-card #report-card-print-area *{visibility:visible !important;}
+  body.printing-report-card #report-card-print-area{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;background:#fff !important;}
 }
 
 /* ── RESPONSIVE ── */
@@ -349,11 +381,178 @@ tbody td{padding:.75rem 1rem;font-size:12px;color:var(--gray-800);}
   .hero-cta{flex-direction:column;align-items:stretch;} .stats-strip{flex-direction:column;}
   .login-options{grid-template-columns:1fr;}
 }
+/* ── FOOTER ── */
+.site-footer{background:var(--navy-dark);color:rgba(255,255,255,.8);margin-top:3rem;padding:3rem 2rem 1.25rem;}
+.footer-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr 1.2fr;gap:2rem;}
+.footer-col h4{color:#fff;font-size:15px;margin-bottom:.9rem;}
+.footer-col p{font-size:13px;line-height:1.7;color:rgba(255,255,255,.65);margin-bottom:.4rem;}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,.75);text-decoration:none;margin-bottom:.55rem;cursor:pointer;transition:color .15s;}
+.footer-col a:hover{color:var(--gold);}
+.footer-bottom{max-width:1100px;margin:2rem auto 0;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,.12);text-align:center;font-size:12px;color:rgba(255,255,255,.5);}
+@media (max-width:720px){.footer-grid{grid-template-columns:1fr;gap:1.75rem;}}
+
 </style>
 </head>
 <body>
 
 <script>
+// ── Hero Slideshow ────────────────────
+let heroSlides=[],heroSlideIndex=0,heroSlideTimer=null;
+function startHeroSlideshow(images){
+  heroSlides=(images||[]).filter(Boolean);
+  if(heroSlideTimer){clearInterval(heroSlideTimer);heroSlideTimer=null;}
+  const bg=document.getElementById('hero-bg');
+  if(!heroSlides.length){bg.classList.remove('loaded');document.getElementById('hero-dots').innerHTML='';return;}
+  heroSlideIndex=0;
+  renderHeroDots();
+  showHeroSlide(0);
+  if(heroSlides.length>1){
+    heroSlideTimer=setInterval(()=>goHeroSlide((heroSlideIndex+1)%heroSlides.length),4500);
+  }
+}
+function showHeroSlide(i){
+  const bg=document.getElementById('hero-bg');
+  bg.classList.remove('loaded');
+  setTimeout(()=>{
+    bg.style.backgroundImage=`url('${heroSlides[i]}')`;
+    bg.classList.add('loaded');
+  },400);
+  document.querySelectorAll('.hero-dot').forEach((d,idx)=>d.classList.toggle('active',idx===i));
+}
+function goHeroSlide(i){heroSlideIndex=i;showHeroSlide(i);}
+function renderHeroDots(){
+  document.getElementById('hero-dots').innerHTML=heroSlides.length>1?heroSlides.map((_,i)=>`<button class="hero-dot" onclick="goHeroSlide(${i})"></button>`).join(''):'';
+}
+
+// ── Language Switcher (EN / Hausa) ────
+const I18N={
+  en:{
+    header_sub:"MSMR Kano · Qur'an Memorization Programme",
+    nav_home:"🏠 Home",nav_register:"📝 Register",nav_rules:"📜 Rules",nav_login:"🔐 Login",
+    admissions_badge:"🎓 Admissions Open · 2025/2026",
+    hero_title:"🕌 Free Qur'an Memorization Programme",
+    hero_desc:"A free one-year hifz programme for students aged 15 and above. Build your sadaqah jāriyah. 🌙✨",
+    btn_apply:"✍️ Apply Now — It's Free!",btn_check_slip:"🎫 Check My Interview Slip",
+    stat_program:"📅 Programme",stat_age:"🎂 Eligible Age",stat_fees:"💰 No Fees",stat_registered:"👥 Registered",
+    notices_title:"📋 Latest Announcements",notices_loading:"Loading announcements… ⏳",
+    about_badge:"✨ About the Programme",about_title:"Rooted in scholarship, built on sincerity",
+    feature1_title:"Qur'an Memorization (Hifz)",feature1_desc:"Complete 30 juz memorization with daily review, consolidation, and certified ijazah.",
+    feature2_title:"Tajweed & Recitation",feature2_desc:"Correct tajweed rules (Hafs 'an 'Āsim) with oral examination.",
+    feature3_title:"Islamic Studies",feature3_desc:"Aqeedah, fiqh, seerah, and hadith to ground students in authentic deen.",
+    feature4_title:"Character Formation",feature4_desc:"Mentorship and akhlaq befitting a Hafiz of Allāh's Noble Book.",
+    rules_title:"School Rules & Regulations",
+    rule1_title:"Punctuality",rule1_desc:"All students must arrive on time for every session. Lateness of more than 15 minutes without a valid excuse will be recorded.",
+    rule2_title:"Respect & Conduct",rule2_desc:"Students must show respect to all teachers, staff, and fellow students at all times, inside and outside the school premises.",
+    rule3_title:"Qur'an Handling",rule3_desc:"The Qur'an must always be handled with respect — in a state of wudhu, placed on a clean surface, and never put on the floor.",
+    rule4_title:"Daily Memorization",rule4_desc:"Every student is expected to memorize their daily portion (wird) and present it to their teacher. Consistent failure will be noted.",
+    rule5_title:"Mobile Phones",rule5_desc:"Mobile phones must be switched off or on silent during all classes and Qur'an sessions. Unauthorized use is prohibited.",
+    rule6_title:"Dress Code",rule6_desc:"All students must dress modestly and appropriately in Islamic attire. No tight, transparent, or inappropriate clothing is allowed.",
+    rule7_title:"Attendance",rule7_desc:"Minimum 85% attendance is required. Absences must be reported in advance. Unexplained absences may result in dismissal.",
+    rule8_title:"Part-Time (Biye) Students",rule8_desc:"Biye students must attend all Saturday and Sunday sessions without fail. Weekend-only absences follow the same attendance policy.",
+    rule9_title:"Cleanliness",rule9_desc:"Students are responsible for keeping their space clean. Littering on school premises is strictly prohibited.",
+    rule10_title:"Academic Integrity",rule10_desc:"Cheating, impersonation, or falsifying memorization progress is a serious offence and may result in immediate expulsion.",
+    rules_note:"🤲 <strong>By registering, students and their guardians agree to abide by all these rules.</strong> The school reserves the right to amend these rules with notice to students and guardians.",
+    step1_label:"Personal",step2_label:"Photo",step3_label:"Programme",step4_label:"Next of Kin",step5_label:"Account",step6_label:"Agree",
+    s1_title:"Personal Information",s1_sub:"Tell us about the student 📖",
+    lbl_fullname:"Full Name *",lbl_dob:"Date of Birth *",lbl_phone:"Phone Number (optional)",lbl_gender:"Gender *",lbl_state:"State of Origin *",lbl_lga:"L.G.A (Local Government Area) *",lbl_address:"Home Address *",
+    lbl_illness:"Does the student have any illness or medical condition? *",illness_no:"🙅 No",illness_yes:"🏥 Yes",illness_select:"Select any that apply:",
+    btn_next_photo:"Next: Photo 📸 →",
+    s2_title:"Student Photo",s2_sub:"A clear, front-facing photo is required 🙂",
+    s2_tip:"💡 <strong>Tip:</strong> Use good lighting, face the camera directly, and make sure your face is clearly visible. This photo will appear on your interview slip!",
+    btn_open_camera:"📷 Open Camera",btn_upload_photo:"🖼️ Upload Photo",btn_take_photo:"📸 Take Photo",btn_cancel:"✕ Cancel",btn_retake:"🔄 Retake Photo",
+    photo_tip_default:"Take or upload a clear front-facing photo",btn_back:"← Back",btn_next_program:"Next: Programme 📋 →",
+    s3_title:"Programme Selection",s3_sub:"Choose the right programme for you 🕌",lbl_program:"Programme *",
+    s3_tip:"📅 <strong>Hadda (Full Time):</strong> Monday to Friday, full daily sessions.<br/>🌿 <strong>Biye (Part Time):</strong> Saturday and Sunday only — ideal for students still in school.",
+    s3_rules_note:"📜 <strong>Before continuing</strong>, please read and understand the",
+    btn_next_kin:"Next: Next of Kin 👨‍👩‍👦 →",
+    s4_title:"Next of Kin / Guardian",s4_sub:"Emergency contact information 📞",
+    lbl_kin_name:"Guardian's Full Name *",lbl_kin_rel:"Relationship *",lbl_kin_phone:"Guardian's Phone Number *",lbl_kin_email:"Guardian's Email (optional)",lbl_kin_address:"Guardian's Address *",
+    btn_next_account:"Next: Create Account 🔑 →",
+    s5_title:"Create Your Account",s5_sub:"You'll use this to check your interview slip 🎫",
+    lbl_admission:"🎓 Your Admission Number",btn_copy:"📋 Copy",
+    admission_note:"💡 This is auto-generated and cannot be changed. Save it — you'll use it with your password to check your interview slip.",
+    lbl_password:"Password *",pwd_tip:"💡 Or click a suggestion for an easy memorable password",lbl_email:"Email Address (optional)",
+    btn_next_agree:"Next: Agreement ✅ →",
+    s6_title:"Agreement & Submission",s6_sub:"Almost done! Just confirm below 🤲",agree_note:"📋 Please read the agreement carefully before submitting.",
+    agree1_text:"I have read and understood the School Rules & Regulations and agree to abide by them.",
+    agree2_text:"I confirm that all information I have provided is true and accurate.",
+    agree3_text:"The guardian/next of kin consents to this registration and agrees to the school's policies.",
+    btn_submit:"🚀 Submit Application!",
+    login_title:"Welcome Back!",login_sub:"Check your interview slip or manage the portal 👋",
+    opt_student_label:"Student",opt_student_sub:"Check my slip",
+    student_tip:"🔑 <strong>Enter your Admission No. and password</strong> that you were given during registration.",lbl_login_admission:"🎓 Admission No."
+  },
+  ha:{
+    header_sub:"MSMR Kano · Shirin Haddar Alkur'ani",
+    nav_home:"🏠 Gida",nav_register:"📝 Yi Rijista",nav_rules:"📜 Ka'idoji",nav_login:"🔐 Shiga",
+    admissions_badge:"🎓 An Bude Shiga · 2025/2026",
+    hero_title:"🕌 Shirin Haddar Alkur'ani Kyauta",
+    hero_desc:"Shirin haddar Alkur'ani na tsawon shekara guda, kyauta, ga daliban da suka kai shekara 15 zuwa sama. Ka gina sadaka jariya. 🌙✨",
+    btn_apply:"✍️ Nemi Shiga Yanzu — Kyauta ne!",btn_check_slip:"🎫 Duba Takardar Tambayoyi Na",
+    stat_program:"📅 Shirin",stat_age:"🎂 Shekarun Shiga",stat_fees:"💰 Babu Kudi",stat_registered:"👥 Wadanda Suka Yi Rijista",
+    notices_title:"📋 Sabbin Sanarwa",notices_loading:"Ana loda sanarwa… ⏳",
+    about_badge:"✨ Game da Shirin",about_title:"An gina shi akan ilimi da gaskiya",
+    feature1_title:"Haddar Alkur'ani (Hifz)",feature1_desc:"Cikakken haddar Juzu'i 30 tare da bita na yau da kullum da takardar shaidar Ijaza.",
+    feature2_title:"Tajwidi da Karatu",feature2_desc:"Daidaitattun ka'idojin Tajwidi (Hafs 'an 'Asim) tare da jarrabawar baka.",
+    feature3_title:"Karatun Musulunci",feature3_desc:"Akida, Fikihu, Sira, da Hadisi domin kafa dalibai akan addini na gaskiya.",
+    feature4_title:"Gina Halaye",feature4_desc:"Jagoranci da kyawawan halaye da suka dace da Hafizin Littafin Allah Mai Girma.",
+    rules_title:"Ka'idoji da Dokokin Makaranta",
+    rule1_title:"Zuwa Kan Lokaci",rule1_desc:"Dole ne kowane dalibi ya zo kan lokaci a kowane zama. Za a rubuta jinkirin da ya wuce mintuna 15 ba tare da isasshen dalili ba.",
+    rule2_title:"Girmamawa da Hali",rule2_desc:"Dole ne dalibai su nuna girmamawa ga malamai, ma'aikata, da sauran dalibai a koda yaushe, a cikin da wajen makaranta.",
+    rule3_title:"Kula da Alkur'ani",rule3_desc:"Dole ne a rika kula da Alkur'ani da girmamawa a koda yaushe — a cikin alwala, a saka shi akan wuri mai tsafta, kuma kada a taba sa shi kasa.",
+    rule4_title:"Haddar Yau da Kullum",rule4_desc:"Ana sa ran kowane dalibi ya haddace wirdinsa na yau da kullum kuma ya gabatar wa malaminsa. Za a lura da rashin yin haka akai-akai.",
+    rule5_title:"Wayoyin Hannu",rule5_desc:"Dole ne a kashe wayoyin hannu ko a sa su a shiru a lokacin dukkan darasi da zaman Alkur'ani. An hana amfani da su ba tare da izini ba.",
+    rule6_title:"Tufafi",rule6_desc:"Dole ne dukkan dalibai su sa tufafin Musulunci masu dacewa da kunya. Ba a yarda da tufafi masu kunci, ganin ciki, ko rashin dacewa ba.",
+    rule7_title:"Halarta",rule7_desc:"Ana bukatar halarta akalla kashi 85%. Dole ne a sanar da rashin zuwa tun da wuri. Rashin zuwa ba tare da bayani ba na iya haifar da korar dalibi.",
+    rule8_title:"Dalibai na Sashe (Biye)",rule8_desc:"Dole ne daliban Biye su halarci dukkan zaman Asabar da Lahadi ba tare da kasawa ba. Ka'idar halarta iri daya ce ga karshen mako.",
+    rule9_title:"Tsafta",rule9_desc:"Dalibai ne ke da alhakin kula da tsaftar wurarensu. An haramta zubar da shara a filin makaranta kwarai.",
+    rule10_title:"Gaskiya a Karatu",rule10_desc:"Yaudara, kwaikwayon wani, ko karya game da ci gaban haddace babban laifi ne kuma na iya haifar da korar dalibi nan take.",
+    rules_note:"🤲 <strong>Ta hanyar yin rijista, dalibi da masu kula da shi sun amince su bi dukkan wadannan ka'idoji.</strong> Makarantar tana da hakkin canza wadannan ka'idoji tare da sanar da dalibai da masu kula da su.",
+    step1_label:"Bayani",step2_label:"Hoto",step3_label:"Shirin",step4_label:"Dan Uwa",step5_label:"Asusun",step6_label:"Yarda",
+    s1_title:"Bayanin Kai",s1_sub:"Ka fada mana game da dalibin 📖",
+    lbl_fullname:"Cikakken Suna *",lbl_dob:"Ranar Haihuwa *",lbl_phone:"Lambar Waya (ba dole ba)",lbl_gender:"Jinsi *",lbl_state:"Jihar Asali *",lbl_lga:"L.G.A (Karamar Hukuma) *",lbl_address:"Adireshin Gida *",
+    lbl_illness:"Shin dalibin yana da wata cuta ko yanayin lafiya? *",illness_no:"🙅 A'a",illness_yes:"🏥 Eh",illness_select:"Zaɓi duk wanda ya shafa:",
+    btn_next_photo:"Na Gaba: Hoto 📸 →",
+    s2_title:"Hoton Dalibi",s2_sub:"Ana bukatar hoto mai tsabta na fuska 🙂",
+    s2_tip:"💡 <strong>Shawara:</strong> Yi amfani da haske mai kyau, fuskanci kamara kai tsaye, kuma tabbatar fuskarka tana bayyana sosai. Wannan hoton zai bayyana akan takardar tambayoyinka!",
+    btn_open_camera:"📷 Bude Kamara",btn_upload_photo:"🖼️ Loda Hoto",btn_take_photo:"📸 Dauki Hoto",btn_cancel:"✕ Soke",btn_retake:"🔄 Sake Daukar Hoto",
+    photo_tip_default:"Dauki ko loda hoto mai tsabta na fuska",btn_back:"← Baya",btn_next_program:"Na Gaba: Shirin 📋 →",
+    s3_title:"Zaɓin Shirin",s3_sub:"Zaɓi shirin da ya dace da kai 🕌",lbl_program:"Shirin *",
+    s3_tip:"📅 <strong>Hadda (Cikakken Lokaci):</strong> Litinin zuwa Jumma'a, zaman yau da kullum.<br/>🌿 <strong>Biye (Sashen Lokaci):</strong> Asabar da Lahadi kawai — ya dace da daliban da suke makaranta.",
+    s3_rules_note:"📜 <strong>Kafin ka ci gaba</strong>, don Allah ka karanta kuma ka fahimci",
+    btn_next_kin:"Na Gaba: Dan Uwa 👨‍👩‍👦 →",
+    s4_title:"Dan Uwa / Mai Kula",s4_sub:"Bayanin Lamba na Gaggawa 📞",
+    lbl_kin_name:"Cikakken Sunan Mai Kula *",lbl_kin_rel:"Dangantaka *",lbl_kin_phone:"Lambar Wayar Mai Kula *",lbl_kin_email:"Imel na Mai Kula (ba dole ba)",lbl_kin_address:"Adireshin Mai Kula *",
+    btn_next_account:"Na Gaba: Kirkiri Asusu 🔑 →",
+    s5_title:"Kirkiri Asusunka",s5_sub:"Za ka yi amfani da wannan don duba takardar tambayoyinka 🎫",
+    lbl_admission:"🎓 Lambar Shigarka",btn_copy:"📋 Kwafa",
+    admission_note:"💡 Ana samar da wannan kai tsaye kuma ba za a iya canza shi ba. Ka ajiye shi — za ka yi amfani da shi tare da kalmar sirrinka don duba takardar tambayoyinka.",
+    lbl_password:"Kalmar Sirri *",pwd_tip:"💡 Ko danna shawara don sauƙin kalmar sirri mai sauƙin tunawa",lbl_email:"Adireshin Imel (ba dole ba)",
+    btn_next_agree:"Na Gaba: Yarda ✅ →",
+    s6_title:"Yarda da Mikawa",s6_sub:"Kusan an gama! Ka tabbatar a kasa 🤲",agree_note:"📋 Don Allah ka karanta yarjejeniyar sosai kafin ka mika.",
+    agree1_text:"Na karanta kuma na fahimci Ka'idoji da Dokokin Makaranta kuma na yarda in bi su.",
+    agree2_text:"Na tabbatar cewa dukkan bayanan da na bayar gaskiya ne kuma daidai.",
+    agree3_text:"Mai kula/dan uwa ya yarda da wannan rijista kuma ya amince da ka'idojin makaranta.",
+    btn_submit:"🚀 Mika Nema!",
+    login_title:"Barka da Dawowa!",login_sub:"Duba takardar tambayoyinka ko sarrafa shafin 👋",
+    opt_student_label:"Dalibi",opt_student_sub:"Duba takardata",
+    student_tip:"🔑 <strong>Shigar da Lambar Shigarka da kalmar sirri</strong> da aka baka lokacin rijista.",lbl_login_admission:"🎓 Lambar Shiga"
+  }
+};
+let currentLang=localStorage.getItem('msmr_lang')||'en';
+function applyLanguage(lang){
+  currentLang=lang;
+  const dict=I18N[lang]||I18N.en;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(dict[key]!==undefined)el.innerHTML=dict[key];
+  });
+  const btn=document.getElementById('lang-toggle-btn');
+  if(btn)btn.textContent=lang==='en'?'🌐 HA':'🌐 EN';
+  localStorage.setItem('msmr_lang',lang);
+}
+function toggleLanguage(){applyLanguage(currentLang==='en'?'ha':'en');}
+
 const SUPABASE_URL="https://qvzfipoefkgebqjtqhuk.supabase.co";
 const SUPABASE_KEY="sb_publishable_jxqLdjbSqHWlSIsjnbh_Aw_o5nHszVS";
 const API=`${SUPABASE_URL}/rest/v1`;
@@ -410,6 +609,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
   <div class="hero">
     <div class="hero-bg" id="hero-bg"></div>
     <div class="hero-overlay"></div>
+    <div class="hero-dots" id="hero-dots"></div>
     <div class="hero-content">
       <div class="admissions-badge" data-i18n="admissions_badge">🎓 Admissions Open · 2025/2026</div>
       <img id="hero-logo" class="hero-crest" alt="MSMR"/>
@@ -421,6 +621,11 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         <button class="btn-secondary" onclick="showPage('login')" data-i18n="btn_check_slip">🎫 Check My Interview Slip</button>
       </div>
     </div>
+  </div>
+
+  <div class="live-banner" id="live-banner">
+    <span>🔴 <strong>A live class is happening now!</strong></span>
+    <button class="live-banner-btn" onclick="showPage('login')">Log In to Join</button>
   </div>
 
   <div class="stats-strip">
@@ -485,37 +690,37 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
 
     <!-- Steps -->
     <div class="steps" id="reg-steps" style="margin-bottom:1.25rem;">
-      <div class="step active" id="step-1"><div class="step-dot">👤</div><div class="step-label">Personal</div></div>
-      <div class="step" id="step-2"><div class="step-dot">📸</div><div class="step-label">Photo</div></div>
-      <div class="step" id="step-3"><div class="step-dot">📋</div><div class="step-label">Programme</div></div>
-      <div class="step" id="step-4"><div class="step-dot">👨‍👩‍👦</div><div class="step-label">Next of Kin</div></div>
-      <div class="step" id="step-5"><div class="step-dot">🔑</div><div class="step-label">Account</div></div>
-      <div class="step" id="step-6"><div class="step-dot">✅</div><div class="step-label">Agree</div></div>
+      <div class="step active" id="step-1"><div class="step-dot">👤</div><div class="step-label" data-i18n="step1_label">Personal</div></div>
+      <div class="step" id="step-2"><div class="step-dot">📸</div><div class="step-label" data-i18n="step2_label">Photo</div></div>
+      <div class="step" id="step-3"><div class="step-dot">📋</div><div class="step-label" data-i18n="step3_label">Programme</div></div>
+      <div class="step" id="step-4"><div class="step-dot">👨‍👩‍👦</div><div class="step-label" data-i18n="step4_label">Next of Kin</div></div>
+      <div class="step" id="step-5"><div class="step-dot">🔑</div><div class="step-label" data-i18n="step5_label">Account</div></div>
+      <div class="step" id="step-6"><div class="step-dot">✅</div><div class="step-label" data-i18n="step6_label">Agree</div></div>
     </div>
 
     <!-- STEP 1: Personal Info -->
     <div class="card reg-step" id="reg-step-1">
-      <div class="card-header"><div class="card-icon">👤</div><h2>Personal Information</h2><p>Tell us about the student 📖</p></div>
+      <div class="card-header"><div class="card-icon">👤</div><h2 data-i18n="s1_title">Personal Information</h2><p data-i18n="s1_sub">Tell us about the student 📖</p></div>
       <div class="card-body">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Full Name *</label>
+            <label class="form-label" data-i18n="lbl_fullname">Full Name *</label>
             <input class="form-control" id="r-name" type="text" placeholder="e.g. Abdullahi Musa Ibrahim"/>
             <div class="error-msg" id="e-name"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Date of Birth *</label>
+            <label class="form-label" data-i18n="lbl_dob">Date of Birth *</label>
             <input class="form-control" id="r-dob" type="date"/>
             <div class="error-msg" id="e-dob"></div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Phone Number <span class="opt">(optional)</span></label>
+            <label class="form-label" data-i18n="lbl_phone">Phone Number <span class="opt">(optional)</span></label>
             <input class="form-control" id="r-phone" type="tel" placeholder="e.g. 08012345678" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Gender *</label>
+            <label class="form-label" data-i18n="lbl_gender">Gender *</label>
             <select class="form-control" id="r-gender">
               <option value="">— Select Gender —</option>
               <option value="Male">👦 Male</option>
@@ -526,7 +731,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">State of Origin *</label>
+            <label class="form-label" data-i18n="lbl_state">State of Origin *</label>
             <select class="form-control" id="r-state">
               <option value="">— Select State —</option>
               <option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option><option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option><option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option><option>Ekiti</option><option>Enugu</option><option>FCT</option><option>Gombe</option><option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option><option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option><option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option><option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option><option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option>
@@ -534,67 +739,89 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
             <div class="error-msg" id="e-state"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">L.G.A (Local Government Area) *</label>
+            <label class="form-label" data-i18n="lbl_lga">L.G.A (Local Government Area) *</label>
             <input class="form-control" id="r-lga" type="text" placeholder="e.g. Nassarawa"/>
             <div class="error-msg" id="e-lga"></div>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Home Address *</label>
+          <label class="form-label" data-i18n="lbl_address">Home Address *</label>
           <textarea class="form-control" id="r-address" rows="2" placeholder="e.g. No. 5 Ungwan Uku, Kano"></textarea>
           <div class="error-msg" id="e-address"></div>
         </div>
         <div class="form-group">
-          <label class="form-label">Any Illness or Medical Condition <span class="opt">(optional)</span></label>
-          <input class="form-control" id="r-illness" type="text" placeholder="e.g. Asthma, Diabetes — or leave blank"/>
+          <label class="form-label" data-i18n="lbl_illness">Does the student have any illness or medical condition? *</label>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="yesno-btn" id="illness-no-btn" onclick="setIllnessHas(false)" data-i18n="illness_no">🙅 No</button>
+            <button type="button" class="yesno-btn" id="illness-yes-btn" onclick="setIllnessHas(true)" data-i18n="illness_yes">🏥 Yes</button>
+          </div>
+          <div id="illness-details" style="display:none;margin-top:.85rem;">
+            <div style="font-size:12px;color:var(--gray-600);margin-bottom:.5rem;font-weight:600;" data-i18n="illness_select">Select any that apply:</div>
+            <div id="illness-checks" style="display:flex;flex-wrap:wrap;gap:8px;">
+              <div class="chip illness-chip" data-val="Asthma" onclick="toggleIllnessChip(this)">Asthma</div>
+              <div class="chip illness-chip" data-val="Diabetes" onclick="toggleIllnessChip(this)">Diabetes</div>
+              <div class="chip illness-chip" data-val="Sickle Cell Disorder" onclick="toggleIllnessChip(this)">Sickle Cell Disorder</div>
+              <div class="chip illness-chip" data-val="Epilepsy" onclick="toggleIllnessChip(this)">Epilepsy</div>
+              <div class="chip illness-chip" data-val="Hypertension" onclick="toggleIllnessChip(this)">Hypertension</div>
+              <div class="chip illness-chip" data-val="Heart Condition" onclick="toggleIllnessChip(this)">Heart Condition</div>
+              <div class="chip illness-chip" data-val="Allergies" onclick="toggleIllnessChip(this)">Allergies</div>
+              <div class="chip illness-chip" data-val="Visual/Hearing Impairment" onclick="toggleIllnessChip(this)">Visual/Hearing Impairment</div>
+            </div>
+            <input class="form-control" id="r-illness-other" type="text" placeholder="Other illness (please specify)" style="margin-top:.65rem;"/>
+          </div>
+          <div class="error-msg" id="e-illness"></div>
         </div>
         <div class="btn-row">
-          <button class="btn-half btn-next" onclick="goStep(2)">Next: Photo 📸 →</button>
+          <button class="btn-half btn-next" onclick="goStep(2)" data-i18n="btn_next_photo">Next: Photo 📸 →</button>
         </div>
       </div>
     </div>
 
     <!-- STEP 2: Photo -->
     <div class="card reg-step" id="reg-step-2" style="display:none;">
-      <div class="card-header"><div class="card-icon">📸</div><h2>Student Photo</h2><p>A clear, front-facing photo is required 🙂</p></div>
+      <div class="card-header"><div class="card-icon">📸</div><h2 data-i18n="s2_title">Student Photo</h2><p data-i18n="s2_sub">A clear, front-facing photo is required 🙂</p></div>
       <div class="card-body">
-        <div class="fun-tip">💡 <strong>Tip:</strong> Use good lighting, face the camera directly, and make sure your face is clearly visible. This photo will appear on your interview slip!</div>
+        <div class="fun-tip" data-i18n="s2_tip">💡 <strong>Tip:</strong> Use good lighting, face the camera directly, and make sure your face is clearly visible. This photo will appear on your interview slip!</div>
         <div class="form-group">
           <div class="photo-capture-box">
-            <img id="photo-thumb" src="" alt="Photo"/>
-            <video id="camera-preview" autoplay playsinline></video>
+            <img id="photo-thumb" src="" alt="Photo" onclick="viewPhotoFull()"/>
+            <div id="photo-zoom-hint" style="display:none;font-size:11px;color:var(--navy);font-weight:600;margin-bottom:.5rem;cursor:pointer;" onclick="viewPhotoFull()">🔍 Tap photo to view full size</div>
+            <div id="camera-wrap" style="position:relative;display:inline-block;">
+              <video id="camera-preview" autoplay playsinline></video>
+              <div class="face-guide-oval" id="face-guide-oval" style="display:none;"></div>
+            </div>
             <canvas id="photo-canvas"></canvas>
             <div id="camera-btns">
-              <button type="button" class="camera-btn" onclick="startCamera()">📷 Open Camera</button>
+              <button type="button" class="camera-btn" onclick="startCamera()" data-i18n="btn_open_camera">📷 Open Camera</button>
               <label class="camera-btn" style="display:inline-block;cursor:pointer;">
-                🖼️ Upload Photo
+                <span data-i18n="btn_upload_photo">🖼️ Upload Photo</span>
                 <input type="file" accept="image/*" style="display:none;" onchange="uploadPhoto(this)"/>
               </label>
             </div>
             <div id="capture-btns" style="display:none;">
-              <button type="button" class="camera-btn green" onclick="capturePhoto()">📸 Take Photo</button>
-              <button type="button" class="camera-btn red" onclick="stopCamera()">✕ Cancel</button>
+              <button type="button" class="camera-btn green" onclick="capturePhoto()" data-i18n="btn_take_photo">📸 Take Photo</button>
+              <button type="button" class="camera-btn red" onclick="stopCamera()" data-i18n="btn_cancel">✕ Cancel</button>
             </div>
             <div id="retake-btns" style="display:none;">
-              <button type="button" class="camera-btn" onclick="retakePhoto()">🔄 Retake Photo</button>
+              <button type="button" class="camera-btn" onclick="retakePhoto()" data-i18n="btn_retake">🔄 Retake Photo</button>
             </div>
-            <div class="photo-tip" id="photo-tip">Take or upload a clear front-facing photo</div>
+            <div class="photo-tip" id="photo-tip" data-i18n="photo_tip_default">Take or upload a clear front-facing photo</div>
           </div>
           <div class="error-msg" id="e-photo"></div>
         </div>
         <div class="btn-row">
-          <button class="btn-half btn-back" onclick="goStep(1)">← Back</button>
-          <button class="btn-half btn-next" onclick="goStep(3)">Next: Programme 📋 →</button>
+          <button class="btn-half btn-back" onclick="goStep(1)" data-i18n="btn_back">← Back</button>
+          <button class="btn-half btn-next" onclick="goStep(3)" data-i18n="btn_next_program">Next: Programme 📋 →</button>
         </div>
       </div>
     </div>
 
     <!-- STEP 3: Programme -->
     <div class="card reg-step" id="reg-step-3" style="display:none;">
-      <div class="card-header"><div class="card-icon">📋</div><h2>Programme Selection</h2><p>Choose the right programme for you 🕌</p></div>
+      <div class="card-header"><div class="card-icon">📋</div><h2 data-i18n="s3_title">Programme Selection</h2><p data-i18n="s3_sub">Choose the right programme for you 🕌</p></div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">Programme *</label>
+          <label class="form-label" data-i18n="lbl_program">Programme *</label>
           <select class="form-control" id="r-program">
             <option value="">— Select Programme —</option>
             <option value="Hadda (Full Time)">📅 Hadda – Full Time (Mon–Fri)</option>
@@ -602,27 +829,27 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
           </select>
           <div class="error-msg" id="e-program"></div>
         </div>
-        <div class="fun-tip gold">📅 <strong>Hadda (Full Time):</strong> Monday to Friday, full daily sessions.<br/>🌿 <strong>Biye (Part Time):</strong> Saturday and Sunday only — ideal for students still in school.</div>
-        <div class="fun-tip">📜 <strong>Before continuing</strong>, please read and understand the <button onclick="showPage('rules')" style="background:none;border:none;color:var(--navy);font-weight:700;cursor:pointer;text-decoration:underline;">School Rules & Regulations</button>.</div>
+        <div class="fun-tip gold" data-i18n="s3_tip">📅 <strong>Hadda (Full Time):</strong> Monday to Friday, full daily sessions.<br/>🌿 <strong>Biye (Part Time):</strong> Saturday and Sunday only — ideal for students still in school.</div>
+        <div class="fun-tip"><span data-i18n="s3_rules_note">📜 <strong>Before continuing</strong>, please read and understand the</span> <button onclick="showPage('rules')" style="background:none;border:none;color:var(--navy);font-weight:700;cursor:pointer;text-decoration:underline;" data-i18n="rules_title">School Rules & Regulations</button>.</div>
         <div class="btn-row">
-          <button class="btn-half btn-back" onclick="goStep(2)">← Back</button>
-          <button class="btn-half btn-next" onclick="goStep(4)">Next: Next of Kin 👨‍👩‍👦 →</button>
+          <button class="btn-half btn-back" onclick="goStep(2)" data-i18n="btn_back">← Back</button>
+          <button class="btn-half btn-next" onclick="goStep(4)" data-i18n="btn_next_kin">Next: Next of Kin 👨‍👩‍👦 →</button>
         </div>
       </div>
     </div>
 
     <!-- STEP 4: Next of Kin -->
     <div class="card reg-step" id="reg-step-4" style="display:none;">
-      <div class="card-header"><div class="card-icon">👨‍👩‍👦</div><h2>Next of Kin / Guardian</h2><p>Emergency contact information 📞</p></div>
+      <div class="card-header"><div class="card-icon">👨‍👩‍👦</div><h2 data-i18n="s4_title">Next of Kin / Guardian</h2><p data-i18n="s4_sub">Emergency contact information 📞</p></div>
       <div class="card-body">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Guardian's Full Name *</label>
+            <label class="form-label" data-i18n="lbl_kin_name">Guardian's Full Name *</label>
             <input class="form-control" id="r-kin-name" type="text" placeholder="e.g. Musa Ibrahim"/>
             <div class="error-msg" id="e-kin-name"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Relationship *</label>
+            <label class="form-label" data-i18n="lbl_kin_rel">Relationship *</label>
             <select class="form-control" id="r-kin-rel">
               <option value="">— Select Relationship —</option>
               <option value="Father">👨 Father</option>
@@ -640,65 +867,65 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Guardian's Phone Number *</label>
+            <label class="form-label" data-i18n="lbl_kin_phone">Guardian's Phone Number *</label>
             <input class="form-control" id="r-kin-phone" type="tel" placeholder="e.g. 08099887766" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
             <div class="error-msg" id="e-kin-phone"></div>
           </div>
           <div class="form-group">
-            <label class="form-label">Guardian's Email <span class="opt">(optional)</span></label>
+            <label class="form-label" data-i18n="lbl_kin_email">Guardian's Email <span class="opt">(optional)</span></label>
             <input class="form-control" id="r-kin-email" type="email" placeholder="e.g. guardian@email.com"/>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Guardian's Address *</label>
+          <label class="form-label" data-i18n="lbl_kin_address">Guardian's Address *</label>
           <textarea class="form-control" id="r-kin-address" rows="2" placeholder="Guardian's home address"></textarea>
           <div class="error-msg" id="e-kin-address"></div>
         </div>
         <div class="btn-row">
-          <button class="btn-half btn-back" onclick="goStep(3)">← Back</button>
-          <button class="btn-half btn-next" onclick="goStep(5)">Next: Create Account 🔑 →</button>
+          <button class="btn-half btn-back" onclick="goStep(3)" data-i18n="btn_back">← Back</button>
+          <button class="btn-half btn-next" onclick="goStep(5)" data-i18n="btn_next_account">Next: Create Account 🔑 →</button>
         </div>
       </div>
     </div>
 
     <!-- STEP 5: Account -->
     <div class="card reg-step" id="reg-step-5" style="display:none;">
-      <div class="card-header"><div class="card-icon">🔑</div><h2>Create Your Account</h2><p>You'll use this to check your interview slip 🎫</p></div>
+      <div class="card-header"><div class="card-icon">🔑</div><h2 data-i18n="s5_title">Create Your Account</h2><p data-i18n="s5_sub">You'll use this to check your interview slip 🎫</p></div>
       <div class="card-body">
         <div class="form-group">
-          <label class="form-label">🎓 Your Admission Number</label>
+          <label class="form-label" data-i18n="lbl_admission">🎓 Your Admission Number</label>
           <div style="background:linear-gradient(135deg,var(--navy),var(--navy-dark));color:#fff;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <span id="r-admission-display" style="font-size:1.3rem;font-weight:800;letter-spacing:.05em;font-family:monospace;">MSMR-XXXXX</span>
-            <button type="button" onclick="copyAdmissionNo()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">📋 Copy</button>
+            <button type="button" onclick="copyAdmissionNo()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" data-i18n="btn_copy">📋 Copy</button>
           </div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;">💡 This is auto-generated and cannot be changed. Save it — you'll use it with your password to check your interview slip.</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;" data-i18n="admission_note">💡 This is auto-generated and cannot be changed. Save it — you'll use it with your password to check your interview slip.</div>
         </div>
         <div class="form-group">
-          <label class="form-label">Password *</label>
+          <label class="form-label" data-i18n="lbl_password">Password *</label>
           <div style="position:relative;">
             <input class="form-control" id="r-password" type="password" placeholder="Choose a password (min 6 characters)" style="padding-right:2.75rem;"/>
             <button type="button" onclick="togglePwd('r-password',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--gray-400);">👁</button>
           </div>
           <div class="error-msg" id="e-password"></div>
           <div class="suggest-chips" id="pwd-chips" style="margin-top:.5rem;"></div>
-          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;">💡 Or click a suggestion for an easy memorable password</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:.4rem;" data-i18n="pwd_tip">💡 Or click a suggestion for an easy memorable password</div>
         </div>
         <div class="form-group">
-          <label class="form-label">Email Address <span class="opt">(optional)</span></label>
+          <label class="form-label" data-i18n="lbl_email">Email Address <span class="opt">(optional)</span></label>
           <input class="form-control" id="r-email" type="email" placeholder="e.g. student@email.com"/>
         </div>
         <div class="btn-row">
-          <button class="btn-half btn-back" onclick="goStep(4)">← Back</button>
-          <button class="btn-half btn-next" onclick="goStep(6)">Next: Agreement ✅ →</button>
+          <button class="btn-half btn-back" onclick="goStep(4)" data-i18n="btn_back">← Back</button>
+          <button class="btn-half btn-next" onclick="goStep(6)" data-i18n="btn_next_agree">Next: Agreement ✅ →</button>
         </div>
       </div>
     </div>
 
     <!-- STEP 6: Agreement -->
     <div class="card reg-step" id="reg-step-6" style="display:none;">
-      <div class="card-header"><div class="card-icon">📜</div><h2>Agreement & Submission</h2><p>Almost done! Just confirm below 🤲</p></div>
+      <div class="card-header"><div class="card-icon">📜</div><h2 data-i18n="s6_title">Agreement & Submission</h2><p data-i18n="s6_sub">Almost done! Just confirm below 🤲</p></div>
       <div class="card-body">
-        <div class="fun-tip gold">📋 Please read the agreement carefully before submitting.</div>
+        <div class="fun-tip gold" data-i18n="agree_note">📋 Please read the agreement carefully before submitting.</div>
         <div class="agreement-box">
           <strong>Student & Guardian Agreement</strong><br/><br/>
           I / We, the undersigned student and guardian, hereby agree to the following:<br/><br/>
@@ -713,21 +940,21 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="agree1"/>
-          <span>I have read and understood the School Rules & Regulations and agree to abide by them.</span>
+          <span data-i18n="agree1_text">I have read and understood the School Rules & Regulations and agree to abide by them.</span>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="agree2"/>
-          <span>I confirm that all information I have provided is true and accurate.</span>
+          <span data-i18n="agree2_text">I confirm that all information I have provided is true and accurate.</span>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="agree3"/>
-          <span>The guardian/next of kin consents to this registration and agrees to the school's policies.</span>
+          <span data-i18n="agree3_text">The guardian/next of kin consents to this registration and agrees to the school's policies.</span>
         </div>
         <div class="error-msg" id="e-agree"></div>
         <div style="margin-top:1.25rem;">
           <div class="btn-row">
-            <button class="btn-half btn-back" onclick="goStep(5)">← Back</button>
-            <button class="btn-half btn-next gold-btn" id="reg-btn" onclick="submitRegistration()" style="background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy-dark);">🚀 Submit Application!</button>
+            <button class="btn-half btn-back" onclick="goStep(5)" data-i18n="btn_back">← Back</button>
+            <button class="btn-half btn-next gold-btn" id="reg-btn" onclick="submitRegistration()" style="background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy-dark);" data-i18n="btn_submit">🚀 Submit Application!</button>
           </div>
         </div>
       </div>
@@ -740,21 +967,27 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
 <div id="page-login" class="page">
   <div class="container">
     <div class="card">
-      <div class="card-header"><div class="card-icon">🔍</div><h2>Welcome Back!</h2><p>Check your interview slip or manage the portal 👋</p></div>
+      <div class="card-header"><div class="card-icon">🔍</div><h2 data-i18n="login_title">Welcome Back!</h2><p data-i18n="login_sub">Check your interview slip or manage the portal 👋</p></div>
       <div class="card-body">
         <div class="login-options">
           <div class="login-option-btn selected" id="opt-student" onclick="selectLoginType('student')">
-            <div class="opt-icon">🎓</div><div class="opt-label">Student</div><div class="opt-sub">Check my slip</div>
+            <div class="opt-icon">🎓</div><div class="opt-label" data-i18n="opt_student_label">Student</div><div class="opt-sub" data-i18n="opt_student_sub">Check my slip</div>
+          </div>
+          <div class="login-option-btn" id="opt-guardian" onclick="selectLoginType('guardian')">
+            <div class="opt-icon">👪</div><div class="opt-label">Guardian</div><div class="opt-sub">Check status</div>
+          </div>
+          <div class="login-option-btn" id="opt-teacher" onclick="selectLoginType('teacher')">
+            <div class="opt-icon">👨‍🏫</div><div class="opt-label">Teacher</div><div class="opt-sub">Join / start class</div>
           </div>
           <div class="login-option-btn" id="opt-admin" onclick="selectLoginType('admin')">
             <div class="opt-icon">🛡️</div><div class="opt-label">Admin</div><div class="opt-sub">Manage portal</div>
           </div>
         </div>
         <div id="student-login-form">
-          <div class="fun-tip">🔑 <strong>Enter your Admission No. and password</strong> that you were given during registration.</div>
+          <div class="fun-tip" data-i18n="student_tip">🔑 <strong>Enter your Admission No. and password</strong> that you were given during registration.</div>
           <div class="form-group">
-            <label class="form-label">🎓 Admission No.</label>
-            <input class="form-control" id="login-admission" type="text" placeholder="e.g. MSMR-A1B2C" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"/>
+            <label class="form-label" data-i18n="lbl_login_admission">🎓 Admission No.</label>
+            <input class="form-control" id="login-admission" type="text" placeholder="e.g. MSMR/26/0001" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="form-group">
             <label class="form-label">🔑 Password</label>
@@ -765,6 +998,19 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
             <div class="error-msg" id="err-login"></div>
           </div>
           <button class="btn-full" id="login-btn" onclick="doStudentLogin()">🎫 View My Interview Slip</button>
+        </div>
+        <div id="guardian-login-form" style="display:none;">
+          <div class="fun-tip">👪 <strong>Guardian Check</strong> — enter the student's Admission No. and the guardian phone number used at registration. No password needed.</div>
+          <div class="form-group">
+            <label class="form-label">🎓 Student's Admission No.</label>
+            <input class="form-control" id="guardian-admission" type="text" placeholder="e.g. MSMR/26/0001" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📞 Guardian's Phone Number</label>
+            <input class="form-control" id="guardian-phone" type="tel" placeholder="e.g. 08099887766" maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+            <div class="error-msg" id="err-guardian"></div>
+          </div>
+          <button class="btn-full" id="guardian-btn" onclick="doGuardianLogin()">🔍 Check Status</button>
         </div>
         <div id="admin-login-form" style="display:none;">
           <div class="fun-tip">🛡️ <strong>Admin Area</strong> — Restricted access only.</div>
@@ -777,6 +1023,96 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
             <div class="error-msg" id="err-admin"></div>
           </div>
           <button class="btn-full" id="admin-btn" onclick="doAdminLogin()">🛡️ Enter Admin Dashboard</button>
+        </div>
+        <div id="teacher-login-form" style="display:none;">
+          <div class="fun-tip">👨‍🏫 <strong>Teacher Area</strong> — enter your teacher password.</div>
+          <div class="form-group">
+            <label class="form-label">🔑 Teacher Password</label>
+            <div style="position:relative;">
+              <input class="form-control" id="teacher-pwd" type="password" placeholder="Enter teacher password" style="padding-right:2.75rem;"/>
+              <button type="button" onclick="togglePwd('teacher-pwd',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--gray-400);">👁</button>
+            </div>
+            <div class="error-msg" id="err-teacher"></div>
+          </div>
+          <button class="btn-full" id="teacher-btn" onclick="doTeacherLogin()">👨‍🏫 Enter Teacher Home</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENT HOME (shown after student login) -->
+    <div id="student-home" style="display:none;margin-top:1.5rem;">
+      <div class="card">
+        <div class="card-header"><div class="card-icon">🎓</div><h2 id="student-home-name">Welcome!</h2><p>Here's your student home page.</p></div>
+        <div class="card-body">
+          <div class="live-banner" id="student-live-banner" style="position:static;max-width:none;margin:0 0 1rem;">
+            <span>🔴 <strong>Live class happening now!</strong></span>
+            <button class="live-banner-btn" onclick="enterLivePage(studentActiveLiveSession.room_code,false)">Join Now</button>
+          </div>
+          <div id="next-class-box" style="display:none;background:rgba(30,58,138,.06);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:1rem;"></div>
+          <button class="btn-secondary" id="enable-notif-btn" onclick="enableNotifications()" style="width:100%;margin-bottom:1rem;font-size:12px;">🔔 Enable Notifications on This Device</button>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+            <button class="btn-secondary" onclick="toggleStudentSection('timetable')">📅 Timetable</button>
+            <button class="btn-secondary" onclick="toggleStudentSection('quizzes')">📝 Quizzes</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.6rem;">
+            <button class="btn-secondary" onclick="toggleStudentSection('progress')">📊 My Progress</button>
+            <button class="btn-secondary" onclick="toggleStudentSection('chat')">💬 Class Chat</button>
+          </div>
+          <button class="btn-primary" style="width:100%;margin-bottom:1rem;" onclick="toggleStudentSlip()">🎫 Interview Slip</button>
+
+          <div id="student-timetable-section" style="display:none;margin-bottom:1rem;"></div>
+
+          <div id="student-quizzes-section" style="display:none;margin-bottom:1rem;"></div>
+
+          <div id="student-progress-section" style="display:none;margin-bottom:1rem;"></div>
+
+          <div id="student-chat-section" style="display:none;margin-bottom:1rem;">
+            <div style="display:flex;gap:8px;margin-bottom:.6rem;">
+              <div class="chip" id="chat-tab-group" onclick="openClassChat(null,'Class Group')">👥 Group</div>
+              <div class="chip" id="chat-tab-classmates" onclick="showClassmatesList()">🧑‍🤝‍🧑 Classmates</div>
+            </div>
+            <div id="classmates-list" style="display:none;max-height:180px;overflow-y:auto;margin-bottom:.6rem;"></div>
+            <div id="chat-thread-title" style="font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:.4rem;">Class Group</div>
+            <div id="chat-messages-box" style="height:220px;overflow-y:auto;background:var(--gray-50);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="chat-reply-preview" style="display:none;background:var(--gray-100);border-left:3px solid var(--navy);padding:6px 10px;border-radius:6px;margin-top:.5rem;font-size:12px;justify-content:space-between;align-items:center;">
+              <span id="chat-reply-preview-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+              <span style="cursor:pointer;padding-left:8px;" onclick="cancelReply()">✕</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:.6rem;">
+              <input class="form-control" id="chat-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChatMessage()"/>
+              <button class="btn-save" onclick="sendChatMessage()">➤</button>
+            </div>
+          </div>
+
+          <button class="btn-secondary" style="width:100%;" onclick="resetLoginPage();showPage('login')">← Log Out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEACHER HOME (shown after teacher login) -->
+    <div id="teacher-home" style="display:none;margin-top:1.5rem;">
+      <div class="card">
+        <div class="card-header"><div class="card-icon">👨‍🏫</div><h2>Welcome, Teacher!</h2><p>Your teacher home page.</p></div>
+        <div class="card-body">
+          <div style="background:var(--gray-50);border-radius:12px;padding:1.5rem;">
+            <div id="t-live-status" style="font-weight:700;margin-bottom:1rem;">⚪ No active session</div>
+            <div class="form-group" id="t-class-picker"><label class="form-label">🏫 Which class?</label><select class="form-control" id="t-class-select"><option value="">— Select a class —</option></select></div>
+            <button class="btn-save" id="t-live-start-btn" onclick="teacherStartLive()">▶️ Start Live Class</button>
+            <button class="btn-delete" id="t-live-end-btn" style="display:none;" onclick="teacherEndLive()">⏹️ End Live Class</button>
+            <button class="btn-edit" id="t-live-join-btn" style="display:none;margin-top:.5rem;" onclick="enterLivePage(this.dataset.room,true)">🎥 Join as Teacher</button>
+          </div>
+          <button class="btn-secondary" style="width:100%;margin-top:1rem;" onclick="resetLoginPage();showPage('login')">← Log Out</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUARDIAN HOME (shown after guardian check) -->
+    <div id="guardian-home" style="display:none;margin-top:1.5rem;">
+      <div class="card">
+        <div class="card-header"><div class="card-icon">👪</div><h2>Student Status</h2><p>Read-only view for guardians.</p></div>
+        <div class="card-body" id="guardian-home-body">
+          <div class="spinner"></div>
         </div>
       </div>
     </div>
@@ -821,6 +1157,7 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
         <div class="slip-actions">
           <button class="slip-print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+          <button class="slip-print-btn" style="background:linear-gradient(135deg,#25D366,#128C7E);" onclick="shareSlipWhatsApp()">📤 Share via WhatsApp</button>
         </div>
       </div>
       </div>
@@ -836,8 +1173,16 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
       <div class="sidebar-item active" onclick="showPanel('students',this)"><span>👥</span>Students<span class="sidebar-badge" id="sidebar-count">0</span></div>
       <div class="sidebar-item" onclick="showPanel('approve',this)"><span>✅</span>Bulk Approve<span class="sidebar-badge" id="sidebar-pending">0</span></div>
       <div class="sidebar-item" onclick="showPanel('flagged',this)"><span>🚩</span>Flagged<span class="sidebar-badge" id="sidebar-flagged">0</span></div>
+      <div class="sidebar-item" onclick="showPanel('live',this)"><span>🔴</span>Live Class</div>
       <div class="sidebar-item" onclick="showPanel('notices',this)"><span>📋</span>Notices</div>
       <div class="sidebar-item" onclick="showPanel('admins',this)"><span>🛡️</span>Admins</div>
+      <div class="sidebar-item" onclick="showPanel('teachers',this)"><span>👨‍🏫</span>Teachers</div>
+      <div class="sidebar-item" onclick="showPanel('classes',this)"><span>🏫</span>Classes</div>
+      <div class="sidebar-item" onclick="showPanel('timetable',this)"><span>📅</span>Timetable</div>
+      <div class="sidebar-item" onclick="showPanel('quizzes',this)"><span>📝</span>Quizzes</div>
+      <div class="sidebar-item" onclick="showPanel('loginlogs',this)"><span>🕵️</span>Login Activity</div>
+      <div class="sidebar-item" onclick="showPanel('attendance',this)"><span>📋</span>Attendance</div>
+      <div class="sidebar-item" onclick="showPanel('grades',this)"><span>📊</span>Grades</div>
       <div class="sidebar-item" onclick="showPanel('settings',this)"><span>⚙️</span>Settings</div>
       <div class="sidebar-item" onclick="adminLogout()"><span>🚪</span>Logout</div>
     </div>
@@ -904,12 +1249,26 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
       <!-- Flagged Duplicates Panel -->
       <div class="admin-panel" id="panel-flagged">
         <div class="panel-title">🚩 Flagged Possible Duplicates</div>
-        <div class="panel-sub">Registrations auto-flagged for matching name/DOB, guardian phone, or face photo. Review and decide — nothing is blocked automatically.</div>
+        <div class="panel-sub">New registrations are auto-checked against existing students (name/DOB, phone, guardian phone, face photo). Nothing is ever blocked automatically — you decide.</div>
+        <button class="btn-save" id="scan-dup-btn" onclick="scanAllDuplicates()" style="margin-bottom:1rem;">🔍 Scan All Students for Duplicates</button>
         <div class="table-wrap">
           <table>
             <thead><tr><th>New Registration</th><th>Reason Flagged</th><th>Possible Match</th><th>Actions</th></tr></thead>
             <tbody id="flagged-tbody"><tr><td colspan="4"><div class="spinner"></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Live Class Panel -->
+      <div class="admin-panel" id="panel-live">
+        <div class="panel-title">🔴 Live Video Class</div>
+        <div class="panel-sub">Start or end a live class session. Works best with up to 5 people total (you + 4 students).</div>
+        <div style="background:var(--gray-50);border-radius:12px;padding:1.5rem;max-width:420px;">
+          <div id="live-admin-status" style="font-weight:700;margin-bottom:1rem;">⚪ No active session</div>
+          <div class="form-group" id="live-class-picker"><label class="form-label">🏫 Which class?</label><select class="form-control" id="live-class-select"><option value="">— Select a class —</option></select></div>
+          <button class="btn-save" id="live-start-btn" onclick="adminStartLive()">▶️ Start Live Class</button>
+          <button class="btn-delete" id="live-end-btn" style="display:none;" onclick="adminEndLive()">⏹️ End Live Class</button>
+          <button class="btn-edit" id="live-join-teacher-btn" style="display:none;margin-top:.5rem;" onclick="enterLivePage(this.dataset.room,true)">🎥 Join as Teacher</button>
         </div>
       </div>
 
@@ -957,16 +1316,175 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
         </div>
       </div>
 
+      <!-- Teachers Panel -->
+      <div class="admin-panel" id="panel-teachers">
+        <div class="panel-title">👨‍🏫 Teacher Management</div>
+        <div class="panel-sub">Add or remove teacher accounts. Teachers log in from the Login page to start/join live classes.</div>
+        <div style="max-width:500px;">
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>➕ Add New Teacher</h3>
+            <p>New teacher can log in with their name and password.</p>
+            <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="new-teacher-name" type="text" placeholder="e.g. Malam Ahmad"/></div>
+            <div class="form-group"><label class="form-label">Password</label><input class="form-control" id="new-teacher-pwd" type="password" placeholder="Strong password"/></div>
+            <button class="btn-save" onclick="addTeacher()">✅ Add Teacher</button>
+          </div>
+          <div class="settings-card">
+            <h3>👥 Current Teachers</h3>
+            <div id="teacher-list"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Classes Panel -->
+      <div class="admin-panel" id="panel-classes">
+        <div class="panel-title">🏫 Class Management</div>
+        <div class="panel-sub">Create classes and assign students to them (via each student's ✏️ Edit button). Live sessions are tied to a specific class — only that class's students see it.</div>
+        <div style="max-width:500px;">
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>➕ Add New Class</h3>
+            <div class="form-group"><label class="form-label">Class Name</label><input class="form-control" id="new-class-name" type="text" placeholder="e.g. Hadda Batch A"/></div>
+            <button class="btn-save" onclick="addClass()">✅ Add Class</button>
+          </div>
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>📋 Current Classes</h3>
+            <div id="class-list"><div class="spinner"></div></div>
+          </div>
+          <div class="settings-card">
+            <h3>🧑‍🤝‍🧑 Bulk Assign Students</h3>
+            <p>Check students below, pick a class, then assign them all at once.</p>
+            <div class="form-group"><select class="form-control" id="bulk-class-select"><option value="">— Select target class —</option></select></div>
+            <input class="form-control" id="bulk-assign-search" type="text" placeholder="🔍 Search students…" oninput="renderBulkAssignList()" style="margin-bottom:.6rem;"/>
+            <div id="bulk-assign-list" style="max-height:260px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:10px;padding:.5rem;margin-bottom:.75rem;"></div>
+            <button class="btn-save" onclick="bulkAssignClass()">✅ Assign Selected to Class</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timetable Panel -->
+      <div class="admin-panel" id="panel-timetable">
+        <div class="panel-title">📅 Class Timetable</div>
+        <div class="panel-sub">Build the weekly schedule for a class. Students see this (and their "next class") on their home page.</div>
+        <div style="max-width:560px;">
+          <div class="form-group"><label class="form-label">🏫 Class</label><select class="form-control" id="tt-class-select" onchange="loadTimetableForClass()"><option value="">— Select a class —</option></select></div>
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>➕ Add Period</h3>
+            <div class="form-group"><label class="form-label">Day</label><select class="form-control" id="tt-day"><option>Saturday</option><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+            <div class="form-group"><label class="form-label">Subject</label><input class="form-control" id="tt-subject" type="text" placeholder="e.g. Tajweed"/></div>
+            <div style="display:flex;gap:.6rem;">
+              <div class="form-group" style="flex:1;"><label class="form-label">Start</label><input class="form-control" id="tt-start" type="time"/></div>
+              <div class="form-group" style="flex:1;"><label class="form-label">End</label><input class="form-control" id="tt-end" type="time"/></div>
+            </div>
+            <button class="btn-save" onclick="addTimetableEntry()">✅ Add Period</button>
+          </div>
+          <div class="settings-card">
+            <h3>📋 Current Schedule</h3>
+            <div id="timetable-list"><p style="font-size:13px;color:var(--gray-400);">Select a class above.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quizzes Panel -->
+      <div class="admin-panel" id="panel-quizzes">
+        <div class="panel-title">📝 Quizzes & Exams</div>
+        <div class="panel-sub">Create a quiz for a class. Students see it on their home page and results are saved automatically.</div>
+        <div style="max-width:600px;">
+          <div class="form-group"><label class="form-label">🏫 Class</label><select class="form-control" id="qz-class-select" onchange="loadQuizzesForClass()"><option value="">— Select a class —</option></select></div>
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>➕ Create New Quiz</h3>
+            <div class="form-group"><label class="form-label">Quiz Title</label><input class="form-control" id="qz-title" type="text" placeholder="e.g. Juz 1 Review"/></div>
+            <div id="qz-question-list"></div>
+            <div class="settings-card" style="background:rgba(245,158,11,.08);margin:1rem 0;border:1px dashed var(--gold);">
+              <h3 style="font-size:13px;">🎲 Quick-Add from Question Bank</h3>
+              <p style="font-size:11px;color:var(--gray-500);">Not real AI — a ready-made bank of sample questions by subject you can quickly add, then edit or remove as needed.</p>
+              <div style="display:flex;gap:.5rem;">
+                <select class="form-control" id="qz-bank-subject" style="flex:1;">
+                  <option value="tajweed">🎵 Tajweed</option>
+                  <option value="hifz">📖 Hifz / Qur'an</option>
+                  <option value="fiqh">⚖️ Fiqh</option>
+                  <option value="aqeedah">🕌 Aqeedah</option>
+                  <option value="seerah">📜 Seerah</option>
+                </select>
+                <button class="btn-edit" onclick="quickAddFromBank()">➕ Add All</button>
+              </div>
+            </div>
+            <div class="settings-card" style="background:var(--gray-50);margin:1rem 0;">
+              <h3 style="font-size:13px;">Add a Question Manually</h3>
+              <div class="form-group"><input class="form-control" id="qz-q-text" type="text" placeholder="Question text"/></div>
+              <div class="form-group"><input class="form-control" id="qz-opt-a" type="text" placeholder="Option A"/></div>
+              <div class="form-group"><input class="form-control" id="qz-opt-b" type="text" placeholder="Option B"/></div>
+              <div class="form-group"><input class="form-control" id="qz-opt-c" type="text" placeholder="Option C"/></div>
+              <div class="form-group"><input class="form-control" id="qz-opt-d" type="text" placeholder="Option D"/></div>
+              <div class="form-group"><label class="form-label">Correct Option</label><select class="form-control" id="qz-correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+              <button class="btn-edit" onclick="addQuizQuestion()">➕ Add Question to Quiz</button>
+            </div>
+            <button class="btn-save" onclick="publishQuiz()">🚀 Publish Quiz</button>
+          </div>
+          <div class="settings-card">
+            <h3>📋 Existing Quizzes</h3>
+            <div id="quiz-list"><p style="font-size:13px;color:var(--gray-400);">Select a class above.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Activity Panel -->
+      <div class="admin-panel" id="panel-loginlogs">
+        <div class="panel-title">🕵️ Login Activity</div>
+        <div class="panel-sub">Recent logins across students, teachers, and admins (most recent first).</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>Name</th><th>Admission No. / ID</th><th>Note</th><th>Time</th></tr></thead>
+            <tbody id="loginlogs-tbody"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Attendance Panel -->
+      <div class="admin-panel" id="panel-attendance">
+        <div class="panel-title">📋 Live Class Attendance</div>
+        <div class="panel-sub">Attendance is logged automatically when a student joins a live class. Percentage is based on your 85% attendance rule.</div>
+        <div style="max-width:520px;">
+          <div class="form-group"><label class="form-label">🏫 Class</label><select class="form-control" id="att-class-select" onchange="loadAttendanceForClass()"><option value="">— Select a class —</option></select></div>
+          <div id="attendance-summary"><p style="font-size:13px;color:var(--gray-400);">Select a class above.</p></div>
+        </div>
+      </div>
+
+      <!-- Grades Panel -->
+      <div class="admin-panel" id="panel-grades">
+        <div class="panel-title">📊 Student Grades</div>
+        <div class="panel-sub">Record subject grades per term. Students see these on their "My Progress" page.</div>
+        <div style="max-width:560px;">
+          <div class="form-group"><label class="form-label">🏫 Class</label><select class="form-control" id="gr-class-select" onchange="loadGradesForClass()"><option value="">— Select a class —</option></select></div>
+          <div class="settings-card" style="margin-bottom:1.25rem;">
+            <h3>➕ Add a Grade</h3>
+            <div class="form-group"><label class="form-label">Student</label><select class="form-control" id="gr-student-select"><option value="">— Select a class first —</option></select></div>
+            <div class="form-row" style="display:flex;gap:.6rem;">
+              <div class="form-group" style="flex:1;"><label class="form-label">Term</label><input class="form-control" id="gr-term" type="text" placeholder="e.g. First Term 2025/26"/></div>
+              <div class="form-group" style="flex:1;"><label class="form-label">Subject</label><input class="form-control" id="gr-subject" type="text" placeholder="e.g. Tajweed"/></div>
+            </div>
+            <div class="form-row" style="display:flex;gap:.6rem;">
+              <div class="form-group" style="flex:1;"><label class="form-label">Score</label><input class="form-control" id="gr-score" type="number" min="0" placeholder="e.g. 85"/></div>
+              <div class="form-group" style="flex:1;"><label class="form-label">Out of</label><input class="form-control" id="gr-max" type="number" min="1" value="100"/></div>
+            </div>
+            <div class="form-group"><label class="form-label">Comment (optional)</label><input class="form-control" id="gr-comment" type="text" placeholder="e.g. Excellent progress"/></div>
+            <button class="btn-save" onclick="addGrade()">✅ Add Grade</button>
+          </div>
+          <div class="settings-card">
+            <h3>📋 Recorded Grades</h3>
+            <div id="grades-list"><p style="font-size:13px;color:var(--gray-400);">Select a class above.</p></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Settings Panel -->
       <div class="admin-panel" id="panel-settings">
         <div class="panel-title">⚙️ Portal Settings</div>
         <div class="panel-sub">Hero photo and site settings.</div>
         <div class="settings-grid">
           <div class="settings-card">
-            <h3>🖼️ Homepage Hero Photo</h3>
-            <p>Paste a direct image URL.</p>
-            <div class="form-group"><input class="form-control" id="setting-image" type="url" placeholder="https://…"/></div>
-            <button class="btn-save" onclick="saveSetting('image')">🖼️ Update Photo</button>
+            <h3>🖼️ Homepage Hero Slideshow</h3>
+            <p>Paste one image URL per line — add several for a slide-by-slide slideshow.</p>
+            <div class="form-group"><textarea class="form-control" id="setting-image" rows="4" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea></div>
+            <button class="btn-save" onclick="saveSetting('image')">🖼️ Update Slideshow</button>
           </div>
           <div class="settings-card">
             <h3>📊 Stats</h3>
@@ -986,6 +1504,10 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
     <div class="modal-header"><h3>✏️ Edit Interview Details</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--gray-600);margin-bottom:1rem;">Student: <strong id="modal-name">—</strong></p>
+      <div class="form-group"><label class="form-label">🏫 Class</label><select class="form-control" id="modal-class"><option value="">— No class assigned —</option></select>
+        <button class="btn-save" style="margin-top:.5rem;" onclick="saveStudentClass()">💾 Assign Class</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--gray-200);margin:1rem 0;"/>
       <div class="form-group"><label class="form-label">📅 Interview Date</label><input class="form-control" id="modal-date" type="date"/></div>
       <div class="form-group"><label class="form-label">🕐 Time</label><input class="form-control" id="modal-time" type="time"/></div>
       <div class="form-group"><label class="form-label">📍 Venue</label><input class="form-control" id="modal-venue" type="text" placeholder="e.g. Main Hall"/></div>
@@ -995,6 +1517,106 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
       <button class="btn-confirm" onclick="saveEdit()">✅ Save</button>
     </div>
   </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-header"><h3>👁️ Student Details</h3><button class="modal-close" onclick="closeDetailModal()">✕</button></div>
+    <div class="modal-body" id="detail-modal-body">
+      <div class="spinner"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ LIVE VIDEO CLASS PAGE ══════════════ -->
+<div id="page-live" class="page">
+  <div style="max-width:900px;margin:0 auto;padding:2rem 1.25rem;">
+    <div id="live-prejoin" style="text-align:center;padding:2.5rem 1.5rem;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.06);">
+      <div style="font-size:2.5rem;">🔴</div>
+      <h2 style="margin:.5rem 0;">Live Video Class</h2>
+      <p id="live-room-info" style="color:var(--gray-600);margin-bottom:1.5rem;">Ready to join the live class?</p>
+      <div id="live-full-msg" style="display:none;background:#fee2e2;color:#b91c1c;padding:12px 18px;border-radius:10px;margin-bottom:1rem;font-weight:600;">🚫 This class is full (max 5 participants). Please try again shortly.</div>
+      <button class="btn-primary" onclick="joinLiveClass(liveIsTeacher)">🎥 Join Live Class</button>
+      <button class="btn-secondary" onclick="showPage('home')" style="margin-top:.75rem;">← Cancel</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:1.25rem;">📶 Works best on Wi-Fi or strong mobile data. Some mobile networks may block the connection — if it doesn't connect, try a different network.</p>
+    </div>
+    <div id="live-active-view" style="display:none;">
+      <div class="live-video-grid" id="live-video-grid"></div>
+      <div style="text-align:center;margin-bottom:.75rem;">
+        <select id="live-filter-select" onchange="setVideoFilter(this.value)" style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--gray-200);font-size:12px;">
+          <option value="none">🎨 No Filter</option>
+          <option value="grayscale">⚫ Grayscale</option>
+          <option value="sepia">🟤 Sepia</option>
+          <option value="bright">☀️ Bright</option>
+          <option value="cool">❄️ Cool</option>
+          <option value="warm">🔥 Warm</option>
+        </select>
+      </div>
+      <div class="live-controls">
+        <button id="live-mic-btn" onclick="toggleLiveMic()" title="Mute/unmute">🎤</button>
+        <button id="live-cam-btn" onclick="toggleLiveCam()" title="Camera on/off">📷</button>
+        <button id="live-hand-btn" onclick="toggleRaiseHand()" title="Raise hand">✋</button>
+        <button class="live-leave-btn" onclick="leaveLiveClass()" title="Leave class">📴</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SITE FOOTER -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>Mu'assasatu Sheikh Muhammad Rabi'u</h4>
+      <p>A free Qur'an memorization institution dedicated to knowledge, discipline, and character in Kano, Nigeria. Admissions open for 2025/2026.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <a onclick="showPage('register')">📝 Register</a>
+      <a onclick="showPage('login')">🔐 Login</a>
+      <a onclick="showPage('rules')">📜 Rules</a>
+      <a onclick="showPage('home')">🏠 Home</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <p>📍 2F5W+56J, Aminu Kano Way, LG, Kofar Walka, Kano 700282, Kano</p>
+      <a href="tel:09067277943">📞 090 672 7794 3</a>
+      <a href="tel:07043172330">📞 070 431 7233 0</a>
+      <a href="tel:08034464470">📞 080 344 6447 0</a>
+      <a href="tel:07069277885">📞 070 692 7788 5</a>
+      <a href="tel:08141959979">📞 081 419 5997 9</a>
+    </div>
+  </div>
+  <div class="footer-bottom">© <span id="footer-year"></span> Mu'assasatu Sheikh Muhammad Rabi'u, Kano. All rights reserved.</div>
+</footer>
+
+<!-- PHOTO LIGHTBOX (view captured/uploaded photo full size) -->
+<div id="face-verify-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:1.5rem;max-width:340px;width:100%;text-align:center;">
+    <div style="font-size:1.8rem;margin-bottom:.4rem;">🔒</div>
+    <h3 style="margin-bottom:.4rem;">Verify It's You</h3>
+    <p id="verify-status" style="font-size:12px;color:var(--gray-500);margin-bottom:1rem;">Position your face in frame, then tap Capture.</p>
+    <video id="verify-video" autoplay playsinline muted style="width:100%;max-width:240px;border-radius:10px;border:3px solid var(--navy);margin:0 auto .75rem;display:block;"></video>
+    <canvas id="verify-canvas" style="display:none;"></canvas>
+    <button class="btn-primary" id="verify-capture-btn" onclick="captureAndVerify()" style="width:100%;margin-bottom:.5rem;">📸 Capture</button>
+    <button class="btn-secondary" onclick="skipFaceVerification()" style="width:100%;font-size:12px;">Skip for now</button>
+  </div>
+</div>
+
+<div id="chat-forward-picker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeForwardPicker()">
+  <div style="background:#fff;border-radius:14px;padding:1.25rem;max-width:320px;width:100%;max-height:70vh;overflow-y:auto;">
+    <h4 style="margin-bottom:.75rem;">➡️ Forward to…</h4>
+    <div id="chat-forward-list"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:.75rem;" onclick="closeForwardPicker()">Cancel</button>
+  </div>
+</div>
+
+<div class="photo-lightbox" id="photo-lightbox" onclick="closePhotoLightbox()">
+  <img id="photo-lightbox-img" src="" alt="Full size photo"/>
+  <div class="photo-lightbox-hint">Tap anywhere to close</div>
 </div>
 
 <!-- AI FAQ CHAT WIDGET -->
@@ -1013,9 +1635,11 @@ function genId(){return"MSMR-"+Math.random().toString(36).substring(2,7).toUpper
   </div>
   <div class="ai-chip-row" id="ai-chip-row">
     <div class="ai-chip" onclick="aiAsk('Is it free?')">💰 Is it free?</div>
-    <div class="ai-chip" onclick="aiAsk('What age can join?')">🎂 Age requirement</div>
     <div class="ai-chip" onclick="aiAsk('How do I register?')">📝 How to register</div>
     <div class="ai-chip" onclick="aiAsk('How do I check my slip?')">🎫 Check my slip</div>
+    <div class="ai-chip" onclick="aiAsk('When is my next class?')">📅 My timetable</div>
+    <div class="ai-chip" onclick="aiAsk('Do I have any quizzes?')">📝 My quizzes</div>
+    <div class="ai-chip" onclick="aiAsk('How do I join a live class?')">🎥 Live class</div>
   </div>
   <div class="ai-chat-input-row">
     <input type="text" id="ai-chat-input" placeholder="Type your question…" onkeydown="if(event.key==='Enter')aiSend()"/>
@@ -1074,12 +1698,29 @@ function showPage(name){
 }
 
 function resetLoginPage(){
+  if(chatPollTimer){clearInterval(chatPollTimer);chatPollTimer=null;}
+  cancelReply();closeForwardPicker();
+  stopVerifyCamera();
+  const vm=document.getElementById('face-verify-modal');if(vm)vm.style.display='none';
   document.getElementById('slip-container').style.display='none';
-  document.getElementById('login-admission').value='';
+  document.getElementById('student-home').style.display='none';
+  document.getElementById('teacher-home').style.display='none';
+  document.getElementById('guardian-home').style.display='none';
+  document.querySelector('#page-login .card').style.display='block';
+  loggedInStudent=null;
+  const yy=new Date().getFullYear().toString().slice(-2);
+  const admInput=document.getElementById('login-admission');
+  admInput.value='MSMR/'+yy+'/';
+  setTimeout(()=>{admInput.focus();admInput.setSelectionRange(admInput.value.length,admInput.value.length);},50);
   document.getElementById('login-password').value='';
   document.getElementById('err-login').textContent='';
   document.getElementById('admin-pwd').value='';
   document.getElementById('err-admin').textContent='';
+  document.getElementById('teacher-pwd').value='';
+  document.getElementById('err-teacher').textContent='';
+  document.getElementById('guardian-admission').value='';
+  document.getElementById('guardian-phone').value='';
+  document.getElementById('err-guardian').textContent='';
   selectLoginType('student');
 }
 
@@ -1087,14 +1728,43 @@ function resetLoginPage(){
 function selectLoginType(t){
   loginType=t;
   document.getElementById('opt-student').classList.toggle('selected',t==='student');
+  document.getElementById('opt-guardian').classList.toggle('selected',t==='guardian');
+  document.getElementById('opt-teacher').classList.toggle('selected',t==='teacher');
   document.getElementById('opt-admin').classList.toggle('selected',t==='admin');
   document.getElementById('student-login-form').style.display=t==='student'?'block':'none';
+  document.getElementById('guardian-login-form').style.display=t==='guardian'?'block':'none';
+  document.getElementById('teacher-login-form').style.display=t==='teacher'?'block':'none';
   document.getElementById('admin-login-form').style.display=t==='admin'?'block':'none';
   document.getElementById('slip-container').style.display='none';
+  document.getElementById('student-home').style.display='none';
+  document.getElementById('teacher-home').style.display='none';
+  const gh=document.getElementById('guardian-home');if(gh)gh.style.display='none';
 }
 
 // ── Step navigation ───────────────────
 let currentStep=1;
+// ── Illness Yes/No + chips ────────────
+let illnessHas=null;
+function setIllnessHas(has){
+  illnessHas=has;
+  document.getElementById('illness-yes-btn').classList.toggle('selected',has===true);
+  document.getElementById('illness-no-btn').classList.toggle('selected',has===false);
+  document.getElementById('illness-details').style.display=has?'block':'none';
+  if(!has){
+    document.querySelectorAll('.illness-chip.selected').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('r-illness-other').value='';
+  }
+  document.getElementById('e-illness').textContent='';
+}
+function toggleIllnessChip(el){el.classList.toggle('selected');}
+function getIllnessValue(){
+  if(illnessHas!==true)return null;
+  const picked=Array.from(document.querySelectorAll('.illness-chip.selected')).map(c=>c.dataset.val);
+  const other=document.getElementById('r-illness-other').value.trim();
+  if(other)picked.push(other);
+  return picked.length?picked.join(', '):null;
+}
+
 function goStep(n){
   if(n>currentStep&&!validateStep(currentStep))return;
   document.querySelectorAll('.reg-step').forEach(s=>s.style.display='none');
@@ -1120,6 +1790,7 @@ function validateStep(n){
     err('e-state',!document.getElementById('r-state').value?'Please select state':'');
     err('e-lga',!document.getElementById('r-lga').value.trim()?'LGA is required':'');
     err('e-address',!document.getElementById('r-address').value.trim()?'Address is required':'');
+    err('e-illness',illnessHas===null?'Please select Yes or No':(illnessHas===true&&!getIllnessValue()?'Please select at least one condition or specify below':''));
   }
   if(n===2){
     err('e-photo',!capturedPhoto?'Please take or upload a photo':'');
@@ -1141,10 +1812,29 @@ function validateStep(n){
 }
 
 // ── Admission number (auto-generated, replaces username) ─
-let currentAdmissionNo=genId();
-function newAdmissionNo(){
-  currentAdmissionNo=genId();
+// Memorable sequential format: MSMR/<year>/<4-digit-number>, e.g. MSMR/25/0001
+let currentAdmissionNo='MSMR/'+new Date().getFullYear().toString().slice(-2)+'/…';
+async function computeNextAdmissionNo(){
+  const yy=new Date().getFullYear().toString().slice(-2);
+  const prefix=`MSMR/${yy}/`;
+  try{
+    const rows=await sbSelect('students',`student_id=like.${prefix}*&select=student_id&order=student_id.desc&limit=1`);
+    let next=1;
+    if(rows&&rows.length){
+      const parts=rows[0].student_id.split('/');
+      const num=parseInt(parts[parts.length-1],10);
+      if(!isNaN(num))next=num+1;
+    }
+    return prefix+String(next).padStart(4,'0');
+  }catch(e){
+    console.warn('Could not compute sequential admission no, using a fallback:',e);
+    return prefix+String(Math.floor(1000+Math.random()*9000));
+  }
+}
+async function newAdmissionNo(){
   const el=document.getElementById('r-admission-display');
+  if(el)el.textContent='…generating…';
+  currentAdmissionNo=await computeNextAdmissionNo();
   if(el)el.textContent=currentAdmissionNo;
 }
 function copyAdmissionNo(){
@@ -1159,14 +1849,18 @@ function generatePasswordSuggestions(){
 // ── Face Recognition (duplicate detection) ─
 const FACE_MODEL_URL='https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights';
 let faceModelsReady=false;
-const faceModelsPromise=(async()=>{
-  try{
-    await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
-    await faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL);
-    await faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL);
-    faceModelsReady=true;
-  }catch(e){console.warn('⚠️ Face-recognition models failed to load (duplicate photo-check will be skipped):',e);}
-})();
+let faceModelsPromise=null;
+function startFaceModelsLoading(){
+  faceModelsPromise=(async()=>{
+    try{
+      await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODEL_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL);
+      faceModelsReady=true;
+    }catch(e){console.warn('⚠️ Face-recognition models failed to load (duplicate photo-check will be skipped):',e);}
+  })();
+  return faceModelsPromise;
+}
 
 async function computeFaceDescriptor(dataUrl){
   if(!dataUrl||!faceModelsReady)return null;
@@ -1207,50 +1901,102 @@ async function checkDuplicate(descriptor,name,dob,kinPhone,phone){
 // ── Camera ───────────────────────────
 async function startCamera(){
   try{
-    cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    const constraints={video:{facingMode:'user',width:{ideal:1920},height:{ideal:1920}},audio:false};
+    try{cameraStream=await navigator.mediaDevices.getUserMedia(constraints);}
+    catch(_){cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});}
     const v=document.getElementById('camera-preview');
     v.srcObject=cameraStream;v.style.display='block';
+    document.getElementById('face-guide-oval').style.display='block';
     document.getElementById('camera-btns').style.display='none';
     document.getElementById('capture-btns').style.display='block';
-    document.getElementById('photo-tip').textContent='Position face in frame, then click Take Photo 📸';
+    document.getElementById('photo-tip').textContent='Fit your face inside the oval, in good light 📸';
   }catch(e){toast('❌ Camera unavailable. Please upload a photo.','error');}
 }
-function capturePhoto(){
+// Checks lighting (brightness) and face visibility right after a photo is taken/uploaded —
+// gives instant KYC-style feedback instead of only finding out at submission time.
+let capturedFaceDescriptor=null;
+async function analyzeCapturedPhoto(dataUrl){
+  const fb={ok:true,message:'✅ Photo looks great! 😊',descriptor:null};
+  try{
+    const img=new Image();img.src=dataUrl;await img.decode();
+    const c=document.createElement('canvas');
+    c.width=img.width;c.height=img.height;
+    const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+    const data=ctx.getImageData(0,0,c.width,c.height).data;
+    let sum=0,count=0;
+    for(let i=0;i<data.length;i+=4*29){sum+=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];count++;}
+    const brightness=count?sum/count:128;
+    const tooDark=brightness<60;
+    if(!faceModelsReady){
+      fb.message=tooDark?'💡 Photo looks a bit dark — for a clearer ID photo, retake in better light.':'✅ Photo captured!';
+      fb.ok=!tooDark;
+      return fb;
+    }
+    const results=await faceapi.detectAllFaces(img,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+    if(tooDark){fb.ok=false;fb.message='💡 Photo looks quite dark — please move to a well-lit area (near a window or light) and retake.';}
+    else if(!results.length){fb.ok=false;fb.message='⚠️ No clear face detected — please face the camera directly with your face inside the oval.';}
+    else if(results.length>1){fb.ok=false;fb.message='⚠️ More than one face detected — please retake with just the student alone in frame.';}
+    else{fb.descriptor=Array.from(results[0].descriptor);fb.message='✅ Face is clear and recognizable! 😊';}
+  }catch(e){console.warn('Photo analysis failed:',e);}
+  return fb;
+}
+async function capturePhoto(){
   const v=document.getElementById('camera-preview');
   const c=document.getElementById('photo-canvas');
   c.width=v.videoWidth||400;c.height=v.videoHeight||400;
   c.getContext('2d').drawImage(v,0,0,c.width,c.height);
-  capturedPhoto=c.toDataURL('image/jpeg',0.82);
+  capturedPhoto=c.toDataURL('image/jpeg',0.92);
   showThumb(capturedPhoto);stopCamera();
   document.getElementById('retake-btns').style.display='block';
-  document.getElementById('photo-tip').textContent='✅ Photo captured! Looking good 😊';
   document.getElementById('e-photo').textContent='';
+  const tip=document.getElementById('photo-tip');
+  tip.textContent='🔎 Checking lighting and face…';tip.style.color='';
+  const result=await analyzeCapturedPhoto(capturedPhoto);
+  capturedFaceDescriptor=result.descriptor;
+  tip.textContent=result.message;tip.style.color=result.ok?'':'#dc2626';
+  viewPhotoFull();
 }
-function uploadPhoto(input){
+async function uploadPhoto(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{capturedPhoto=e.target.result;showThumb(capturedPhoto);
+  r.onload=async e=>{
+    capturedPhoto=e.target.result;showThumb(capturedPhoto);
     document.getElementById('retake-btns').style.display='block';
-    document.getElementById('photo-tip').textContent='✅ Photo uploaded!';
     document.getElementById('e-photo').textContent='';
+    const tip=document.getElementById('photo-tip');
+    tip.textContent='🔎 Checking lighting and face…';tip.style.color='';
+    const result=await analyzeCapturedPhoto(capturedPhoto);
+    capturedFaceDescriptor=result.descriptor;
+    tip.textContent=result.message;tip.style.color=result.ok?'':'#dc2626';
+    viewPhotoFull();
   };r.readAsDataURL(f);
 }
+function viewPhotoFull(){
+  if(!capturedPhoto)return;
+  document.getElementById('photo-lightbox-img').src=capturedPhoto;
+  document.getElementById('photo-lightbox').classList.add('open');
+}
+function closePhotoLightbox(){document.getElementById('photo-lightbox').classList.remove('open');}
 function showThumb(src){
   const t=document.getElementById('photo-thumb');t.src=src;t.style.display='block';
+  document.getElementById('photo-zoom-hint').style.display='block';
   document.getElementById('camera-preview').style.display='none';
 }
 function stopCamera(){
   if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
   document.getElementById('camera-preview').style.display='none';
+  document.getElementById('face-guide-oval').style.display='none';
   document.getElementById('capture-btns').style.display='none';
   if(!capturedPhoto)document.getElementById('camera-btns').style.display='block';
 }
 function retakePhoto(){
-  capturedPhoto=null;
+  capturedPhoto=null;capturedFaceDescriptor=null;
   document.getElementById('photo-thumb').style.display='none';
+  document.getElementById('photo-zoom-hint').style.display='none';
   document.getElementById('retake-btns').style.display='none';
   document.getElementById('camera-btns').style.display='block';
-  document.getElementById('photo-tip').textContent='Take or upload a clear front-facing photo';
+  const tip=document.getElementById('photo-tip');
+  tip.textContent='Take or upload a clear front-facing photo';tip.style.color='';
 }
 
 // ── REGISTER SUBMIT ───────────────────
@@ -1270,16 +2016,16 @@ async function submitRegistration(){
     const dob=document.getElementById('r-dob').value;
     const phone=document.getElementById('r-phone').value.trim()||null;
     const kinPhone=document.getElementById('r-kin-phone').value.trim();
+    if(!currentAdmissionNo||currentAdmissionNo.includes('…'))await newAdmissionNo();
 
     // give face models a moment to finish loading, but don't block forever
-    await Promise.race([faceModelsPromise,new Promise(res=>setTimeout(res,4000))]);
-    const descriptor=await computeFaceDescriptor(capturedPhoto);
+    await Promise.race([faceModelsPromise||startFaceModelsLoading(),new Promise(res=>setTimeout(res,4000))]);
+    const descriptor=capturedFaceDescriptor||await computeFaceDescriptor(capturedPhoto);
 
     const dup=await checkDuplicate(descriptor,name,dob,kinPhone,phone);
 
     btn.textContent='⏳ Submitting…';
-    await sbInsert('students',{
-      student_id:currentAdmissionNo,
+    const payloadBase={
       full_name:name,
       dob:dob,
       phone:phone,
@@ -1290,7 +2036,7 @@ async function submitRegistration(){
       state:document.getElementById('r-state').value,
       lga:document.getElementById('r-lga').value.trim(),
       address:document.getElementById('r-address').value.trim(),
-      illness:document.getElementById('r-illness').value.trim()||null,
+      illness:getIllnessValue(),
       password:document.getElementById('r-password').value,
       email:document.getElementById('r-email').value.trim()||null,
       kin_name:document.getElementById('r-kin-name').value.trim(),
@@ -1303,7 +2049,20 @@ async function submitRegistration(){
       duplicate_reason:dup.matched?dup.reason:null,
       duplicate_match_id:dup.matched?dup.matchId:null,
       duplicate_match_name:dup.matched?dup.matchName:null
-    });
+    };
+    // Retry with a fresh admission number if two people happened to submit at the exact same moment.
+    let attempts=0,lastErr=null;
+    while(attempts<3){
+      try{
+        await sbInsert('students',{student_id:currentAdmissionNo,username:currentAdmissionNo,...payloadBase});
+        lastErr=null;break;
+      }catch(insErr){
+        lastErr=insErr;
+        if(/student_id/i.test(insErr.message||'')){attempts++;await newAdmissionNo();continue;}
+        throw insErr;
+      }
+    }
+    if(lastErr)throw lastErr;
     spawnEmoji(['🎉','🤲','📖','✨','🌟','🕌','🎊']);
     toast('🎉 Registration successful! Your Admission No. is '+currentAdmissionNo+' — use it with your password to check your slip.');
     goStep(1);
@@ -1325,22 +2084,30 @@ async function submitRegistration(){
 }
 
 function resetRegForm(){
-  ['r-name','r-dob','r-phone','r-lga','r-address','r-illness','r-password','r-email','r-kin-name','r-kin-email','r-kin-address'].forEach(id=>{
+  ['r-name','r-dob','r-phone','r-lga','r-address','r-illness-other','r-password','r-email','r-kin-name','r-kin-email','r-kin-address'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   ['r-gender','r-state','r-program','r-kin-rel'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   ['agree1','agree2','agree3'].forEach(id=>{document.getElementById(id).checked=false;});
-  capturedPhoto=null;
+  capturedPhoto=null;capturedFaceDescriptor=null;
   document.getElementById('photo-thumb').style.display='none';
+  document.getElementById('photo-zoom-hint').style.display='none';
   document.getElementById('retake-btns').style.display='none';
   document.getElementById('camera-btns').style.display='block';
   document.getElementById('photo-tip').textContent='Take or upload a clear front-facing photo';
+  illnessHas=null;
+  document.getElementById('illness-yes-btn').classList.remove('selected');
+  document.getElementById('illness-no-btn').classList.remove('selected');
+  document.getElementById('illness-details').style.display='none';
+  document.querySelectorAll('.illness-chip.selected').forEach(c=>c.classList.remove('selected'));
   currentStep=1;
 }
 
 // ── STUDENT LOGIN ─────────────────────
+let loggedInStudent=null;
+let loggedInTeacherName='Teacher';
 async function doStudentLogin(){
   const admission=document.getElementById('login-admission').value.trim();
   const password=document.getElementById('login-password').value;
@@ -1349,10 +2116,354 @@ async function doStudentLogin(){
   const btn=document.getElementById('login-btn');btn.textContent='🔍 Searching…';btn.classList.add('loading');
   try{
     const rows=await sbSelect('students',`student_id=eq.${encodeURIComponent(admission)}&password=eq.${encodeURIComponent(password)}`);
-    if(rows&&rows.length>0){showSlip(rows[0]);spawnEmoji(['🎫','✨','📋','🌟']);}
+    if(rows&&rows.length>0){
+      loggedInStudent=rows[0];
+      spawnEmoji(['🎫','✨','📋','🌟']);
+      if(loggedInStudent.photo_data&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+        startFaceVerification();
+      }else{
+        revealStudentHome();
+        logLogin('student',loggedInStudent.full_name,loggedInStudent.student_id,'No reference photo — verification skipped');
+      }
+    }
     else document.getElementById('err-login').innerHTML='❌ Incorrect Admission No. or password.';
   }catch(e){document.getElementById('err-login').innerHTML='❌ Connection error. Try again.';}
   finally{btn.textContent='🎫 View My Interview Slip';btn.classList.remove('loading');}
+}
+function revealStudentHome(){
+  document.querySelector('#page-login .card').style.display='none';
+  document.getElementById('student-home-name').textContent='Welcome, '+(loggedInStudent.full_name||'Student')+'!';
+  document.getElementById('student-home').style.display='block';
+  checkStudentLiveSession();
+  computeNextClass();
+  const notifBtn=document.getElementById('enable-notif-btn');
+  if(notifBtn)notifBtn.style.display=(!('Notification' in window)||Notification.permission==='granted')?'none':'block';
+}
+
+// ── FACE VERIFICATION AT LOGIN ──
+// Non-blocking by design: a mismatch or failure never locks a student out — it's logged for
+// admin review, same philosophy as the registration duplicate-check. Prevents most casual
+// misuse of a shared/guessed admission number without risking a false lockout from bad lighting.
+let verifyStream=null;
+async function startFaceVerification(){
+  document.getElementById('face-verify-modal').style.display='flex';
+  document.getElementById('verify-status').textContent='Position your face in frame, then tap Capture.';
+  document.getElementById('verify-capture-btn').style.display='inline-block';
+  document.getElementById('verify-video').style.display='block';
+  try{
+    verifyStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    document.getElementById('verify-video').srcObject=verifyStream;
+  }catch(e){
+    document.getElementById('verify-status').textContent='⚠️ Camera unavailable — continuing without verification.';
+    document.getElementById('verify-capture-btn').style.display='none';
+    setTimeout(()=>finishVerification(null,'Camera unavailable'),1200);
+  }
+}
+function stopVerifyCamera(){if(verifyStream){verifyStream.getTracks().forEach(t=>t.stop());verifyStream=null;}}
+async function captureAndVerify(){
+  const v=document.getElementById('verify-video');
+  const c=document.getElementById('verify-canvas');
+  c.width=v.videoWidth||320;c.height=v.videoHeight||320;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  const dataUrl=c.toDataURL('image/jpeg',0.85);
+  stopVerifyCamera();
+  document.getElementById('verify-video').style.display='none';
+  document.getElementById('verify-capture-btn').style.display='none';
+  document.getElementById('verify-status').textContent='🔎 Checking…';
+  await Promise.race([faceModelsPromise||startFaceModelsLoading(),new Promise(res=>setTimeout(res,4000))]);
+  const descriptor=await computeFaceDescriptor(dataUrl);
+  let matched=null,note='';
+  if(!descriptor){note='No face detected in verification photo';}
+  else if(!loggedInStudent.face_descriptor){note='No reference face on file to compare';}
+  else{
+    try{
+      const dist=faceapi.euclideanDistance(descriptor,loggedInStudent.face_descriptor);
+      matched=dist<0.6;
+      note=matched?'Face verified':'Face did not match registration photo';
+    }catch(e){note='Verification check failed';}
+  }
+  document.getElementById('verify-status').textContent=matched===true?'✅ Verified! Welcome back.':matched===false?'⚠️ Could not confirm your identity, but you may continue.':'ℹ️ Skipping verification.';
+  setTimeout(()=>finishVerification(matched,note),900);
+}
+function skipFaceVerification(){
+  stopVerifyCamera();
+  finishVerification(null,'Student skipped verification');
+}
+function finishVerification(matched,note){
+  document.getElementById('face-verify-modal').style.display='none';
+  revealStudentHome();
+  logLogin('student',loggedInStudent.full_name,loggedInStudent.student_id,(matched===true?'✅ ':matched===false?'⚠️ ':'ℹ️ ')+note);
+}
+function toggleStudentSlip(){
+  if(loggedInStudent)showSlip(loggedInStudent);
+  document.getElementById('slip-container').scrollIntoView({behavior:'smooth'});
+}
+
+// ── STUDENT HOME: Next Class + Timetable ──
+const JS_DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+async function computeNextClass(){
+  const box=document.getElementById('next-class-box');
+  if(!box)return;
+  if(!loggedInStudent||!loggedInStudent.class_id){box.style.display='none';return;}
+  try{
+    const rows=await sbSelect('timetable',`class_id=eq.${loggedInStudent.class_id}`)||[];
+    if(!rows.length){box.style.display='none';return;}
+    const now=new Date();
+    const todayIdx=now.getDay();
+    const nowHM=now.toTimeString().slice(0,5);
+    let best=null,bestKey=null;
+    rows.forEach(r=>{
+      const dIdx=JS_DAY_NAMES.indexOf(r.day_of_week);
+      if(dIdx<0)return;
+      let daysUntil=(dIdx-todayIdx+7)%7;
+      if(daysUntil===0&&r.start_time&&r.start_time<=nowHM)daysUntil=7;
+      const key=daysUntil*10000+parseInt((r.start_time||'00:00').replace(':',''),10);
+      if(bestKey===null||key<bestKey){bestKey=key;best=r;}
+    });
+    if(best){box.style.display='block';box.innerHTML=`📅 <strong>Next Class:</strong> ${best.subject} — ${best.day_of_week} at ${best.start_time||'?'}`;}
+    else box.style.display='none';
+  }catch(e){box.style.display='none';}
+}
+function toggleStudentSection(name){
+  ['timetable','quizzes','progress','chat'].forEach(n=>{
+    const el=document.getElementById('student-'+n+'-section');
+    if(!el)return;
+    if(n===name){
+      const willShow=el.style.display==='none'||!el.style.display;
+      el.style.display=willShow?'block':'none';
+      if(willShow){
+        if(n==='timetable')renderStudentTimetable();
+        if(n==='quizzes')renderStudentQuizzes();
+        if(n==='progress')renderStudentProgress();
+        if(n==='chat'){loadClassmatePhotos().then(()=>openClassChat(null,'Class Group'));}
+      }else if(n==='chat'&&chatPollTimer){clearInterval(chatPollTimer);chatPollTimer=null;}
+    }else{
+      el.style.display='none';
+      if(n==='chat'&&chatPollTimer){clearInterval(chatPollTimer);chatPollTimer=null;}
+    }
+  });
+}
+async function renderStudentTimetable(){
+  const el=document.getElementById('student-timetable-section');
+  if(!loggedInStudent.class_id){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">You have not been assigned to a class yet — ask the admin.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const rows=await sbSelect('timetable',`class_id=eq.${loggedInStudent.class_id}`)||[];
+    rows.sort((a,b)=>JS_DAY_NAMES.indexOf(a.day_of_week)-JS_DAY_NAMES.indexOf(b.day_of_week)||(a.start_time||'').localeCompare(b.start_time||''));
+    if(!rows.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No timetable added yet.</p>';return;}
+    el.innerHTML=rows.map(r=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;"><span><strong>${r.day_of_week}</strong> — ${r.subject}</span><span style="color:var(--gray-400);">${r.start_time||'?'}–${r.end_time||'?'}</span></div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">Could not load timetable.</p>';}
+}
+
+// ── STUDENT HOME: Quizzes ──
+// ── STUDENT HOME: My Progress (attendance + quiz history combined) ──
+async function renderStudentProgress(){
+  const el=document.getElementById('student-progress-section');
+  if(!loggedInStudent.class_id){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">You have not been assigned to a class yet.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const [sessions,attRecords,quizResults,grades]=await Promise.all([
+      sbSelect('live_sessions',`class_id=eq.${loggedInStudent.class_id}`).catch(()=>[]),
+      sbSelect('attendance',`student_id=eq.${encodeURIComponent(loggedInStudent.student_id)}`).catch(()=>[]),
+      sbSelect('quiz_results',`student_id=eq.${encodeURIComponent(loggedInStudent.student_id)}&order=submitted_at.desc`).catch(()=>[]),
+      sbSelect('grades',`student_id=eq.${encodeURIComponent(loggedInStudent.student_id)}&order=created_at.desc`).catch(()=>[])
+    ]);
+    const totalSessions=(sessions||[]).length;
+    const attended=new Set((attRecords||[]).map(r=>r.session_id)).size;
+    const attPct=totalSessions?Math.round((attended/totalSessions)*100):null;
+    const results=quizResults||[];
+    const avgPct=results.length?Math.round(results.reduce((s,r)=>s+(r.score/r.total*100),0)/results.length):null;
+    const gradeRows=grades||[];
+
+    let html='<div id="report-card-print-area">';
+    html+=`<div style="text-align:center;margin-bottom:1rem;">
+      <strong>${loggedInStudent.full_name}</strong> — ${loggedInStudent.student_id}<br/>
+      <span style="font-size:11px;color:var(--gray-500);">Mu'assasatu Sheikh Muhammad Rabi'u, Kano</span>
+    </div>`;
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem;">';
+    html+=`<div style="background:var(--gray-50);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:800;color:${attPct!==null&&attPct<85?'#dc2626':'var(--navy)'};">${attPct!==null?attPct+'%':'—'}</div>
+      <div style="font-size:11px;color:var(--gray-500);">Attendance${totalSessions?' ('+attended+'/'+totalSessions+')':''}</div>
+    </div>`;
+    html+=`<div style="background:var(--gray-50);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:1.4rem;font-weight:800;color:var(--navy);">${avgPct!==null?avgPct+'%':'—'}</div>
+      <div style="font-size:11px;color:var(--gray-500);">Avg Quiz Score${results.length?' ('+results.length+' taken)':''}</div>
+    </div>`;
+    html+='</div>';
+    html+='<div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:.4rem;">📊 Grades</div>';
+    if(gradeRows.length){
+      html+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:1rem;">'+
+        '<thead><tr style="text-align:left;color:var(--gray-500);"><th style="padding:4px 0;">Term</th><th>Subject</th><th>Score</th><th>Comment</th></tr></thead><tbody>'+
+        gradeRows.map(g=>`<tr style="border-top:1px solid var(--gray-100);"><td style="padding:4px 0;">${g.term}</td><td>${g.subject}</td><td>${g.score}/${g.max_score}</td><td style="color:var(--gray-400);">${g.comment||''}</td></tr>`).join('')+
+        '</tbody></table>';
+    }else{
+      html+='<p style="font-size:12px;color:var(--gray-400);margin-bottom:1rem;">No grades recorded yet.</p>';
+    }
+    html+='<div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:.4rem;">📝 Quiz History</div>';
+    if(results.length){
+      html+=results.map(r=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:13px;"><span>${new Date(r.submitted_at).toLocaleDateString()}</span><span>${r.score}/${r.total}</span></div>`).join('');
+    }else{
+      html+='<p style="font-size:12px;color:var(--gray-400);">No quizzes taken yet.</p>';
+    }
+    html+='</div>';
+    html+='<button class="btn-secondary" style="width:100%;margin-top:1rem;" onclick="printReportCard()">🖨️ Print Report Card</button>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">Could not load progress data.</p>';}
+}
+function printReportCard(){
+  document.body.classList.add('printing-report-card');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('printing-report-card'),500);
+}
+
+async function renderStudentQuizzes(){
+  const el=document.getElementById('student-quizzes-section');
+  if(!loggedInStudent.class_id){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">You have not been assigned to a class yet.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const quizzes=await sbSelect('quizzes',`class_id=eq.${loggedInStudent.class_id}&order=created_at.desc`)||[];
+    if(!quizzes.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No quizzes available right now.</p>';return;}
+    const results=await sbSelect('quiz_results',`student_id=eq.${encodeURIComponent(loggedInStudent.student_id)}`)||[];
+    el.innerHTML=quizzes.map(q=>{
+      const done=results.find(r=>r.quiz_id===q.id);
+      return `<div class="admin-item"><div style="font-size:13px;font-weight:700;">${q.title}</div>${done?`<span class="badge badge-approved">✅ ${done.score}/${done.total}</span>`:`<button class="btn-save" onclick="startQuiz('${q.id}','${(q.title||'').replace(/'/g,"\\'")}')">▶️ Take Quiz</button>`}</div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">Could not load quizzes.</p>';}
+}
+async function startQuiz(quizId,title){
+  const el=document.getElementById('student-quizzes-section');
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const questions=await sbSelect('quiz_questions',`quiz_id=eq.${quizId}`)||[];
+    el.innerHTML=`<h4 style="margin-bottom:.75rem;">${title}</h4>`+
+      questions.map((q,i)=>`<div style="margin-bottom:1rem;"><div style="font-size:13px;font-weight:600;margin-bottom:.4rem;">${i+1}. ${q.question}</div>${['A','B','C','D'].map(opt=>`<label style="display:block;font-size:13px;margin-bottom:.25rem;"><input type="radio" name="qz-ans-${q.id}" value="${opt}"/> ${q['option_'+opt.toLowerCase()]}</label>`).join('')}</div>`).join('')+
+      `<button class="btn-save" onclick="submitQuiz('${quizId}')">✅ Submit Quiz</button>`;
+  }catch(e){toast('❌ Could not load quiz questions.','error');}
+}
+async function submitQuiz(quizId){
+  try{
+    const questions=await sbSelect('quiz_questions',`quiz_id=eq.${quizId}`)||[];
+    let score=0;
+    questions.forEach(q=>{
+      const chosen=document.querySelector(`input[name="qz-ans-${q.id}"]:checked`);
+      if(chosen&&chosen.value===q.correct_option)score++;
+    });
+    const total=questions.length;
+    await sbInsert('quiz_results',{quiz_id:quizId,student_id:loggedInStudent.student_id,student_name:loggedInStudent.full_name,score,total});
+    toast(`🎉 Quiz submitted! Score: ${score}/${total}`);
+    renderStudentQuizzes();
+  }catch(e){toast('❌ Could not submit quiz.','error');}
+}
+
+// ── STUDENT HOME: Chat (group + private, with reply/forward + avatars) ──
+let chatCurrentPeer=null,chatPollTimer=null,chatMessagesCache={},chatReplyTarget=null,classmatePhotos={},forwardMessageId=null;
+async function loadClassmatePhotos(){
+  if(!loggedInStudent||!loggedInStudent.class_id)return;
+  try{
+    const rows=await sbSelect('students',`class_id=eq.${loggedInStudent.class_id}&select=student_id,photo_data`)||[];
+    classmatePhotos={};
+    rows.forEach(s=>{classmatePhotos[s.student_id]=s.photo_data;});
+  }catch(e){}
+}
+async function openClassChat(peerId,title){
+  chatCurrentPeer=peerId;
+  cancelReply();
+  document.getElementById('classmates-list').style.display='none';
+  document.getElementById('chat-thread-title').textContent=title;
+  await loadChatMessages();
+  if(chatPollTimer)clearInterval(chatPollTimer);
+  chatPollTimer=setInterval(loadChatMessages,4000);
+}
+async function showClassmatesList(){
+  if(chatPollTimer){clearInterval(chatPollTimer);chatPollTimer=null;}
+  const box=document.getElementById('classmates-list');
+  box.style.display='block';
+  box.innerHTML='<div class="spinner"></div>';
+  if(!loggedInStudent.class_id){box.innerHTML='<p style="font-size:12px;color:var(--gray-400);">You have not been assigned to a class yet.</p>';return;}
+  try{
+    const rows=await sbSelect('students',`class_id=eq.${loggedInStudent.class_id}&select=student_id,full_name,photo_data`)||[];
+    const others=rows.filter(s=>s.student_id!==loggedInStudent.student_id);
+    if(!others.length){box.innerHTML='<p style="font-size:12px;color:var(--gray-400);">No classmates found yet.</p>';return;}
+    box.innerHTML=others.map(s=>`<div class="chip" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;" onclick="openClassChat('${s.student_id}','${(s.full_name||'').replace(/'/g,"\\'")}')">
+      ${s.photo_data?`<img src="${s.photo_data}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>`:`<div style="width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">${(s.full_name||'?')[0]}</div>`}
+      <span>${s.full_name}</span>
+    </div>`).join('');
+  }catch(e){box.innerHTML='<p style="font-size:12px;color:#dc2626;">Could not load classmates.</p>';}
+}
+async function loadChatMessages(){
+  const box=document.getElementById('chat-messages-box');
+  if(!box||!loggedInStudent||!loggedInStudent.class_id)return;
+  const me=loggedInStudent.student_id;
+  try{
+    let query;
+    if(chatCurrentPeer===null)query=`class_id=eq.${loggedInStudent.class_id}&recipient_id=is.null&order=created_at.asc&limit=100`;
+    else query=`class_id=eq.${loggedInStudent.class_id}&or=(and(sender_id.eq.${me},recipient_id.eq.${chatCurrentPeer}),and(sender_id.eq.${chatCurrentPeer},recipient_id.eq.${me}))&order=created_at.asc&limit=100`;
+    const rows=await sbSelect('chat_messages',query)||[];
+    chatMessagesCache={};rows.forEach(m=>chatMessagesCache[m.id]=m);
+    box.innerHTML=rows.map(m=>{
+      const isMe=m.sender_id===me;
+      const avatarSrc=classmatePhotos[m.sender_id];
+      const avatarHtml=!isMe?(avatarSrc?`<img src="${avatarSrc}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;"/>`:''):'';
+      return `<div class="ai-msg ${isMe?'user':'bot'}">
+        ${m.forwarded_from?`<div style="font-size:11px;opacity:.75;font-style:italic;margin-bottom:3px;">➡️ Forwarded from ${m.forwarded_from}</div>`:''}
+        ${m.reply_to_content?`<div style="font-size:11px;opacity:.75;border-left:2px solid currentColor;padding-left:6px;margin-bottom:3px;">↩️ ${m.reply_to_sender}: ${(m.reply_to_content||'').slice(0,60)}</div>`:''}
+        ${!isMe?avatarHtml+'<strong>'+m.sender_name+':</strong> ':''}${m.content}
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <span style="font-size:10px;opacity:.65;cursor:pointer;" onclick="replyToMessage('${m.id}')">↩️ Reply</span>
+          <span style="font-size:10px;opacity:.65;cursor:pointer;" onclick="openForwardPicker('${m.id}')">➡️ Forward</span>
+        </div>
+      </div>`;
+    }).join('');
+    box.scrollTop=box.scrollHeight;
+  }catch(e){box.innerHTML='<p style="font-size:12px;color:#dc2626;">⚠️ chat_messages table not found — run the migration first.</p>';}
+}
+function replyToMessage(id){
+  const m=chatMessagesCache[id];if(!m)return;
+  const senderLabel=m.sender_id===loggedInStudent.student_id?'yourself':m.sender_name;
+  chatReplyTarget={content:m.content,sender:senderLabel};
+  document.getElementById('chat-reply-preview-text').textContent=`Replying to ${senderLabel}: ${m.content.slice(0,50)}`;
+  document.getElementById('chat-reply-preview').style.display='flex';
+  document.getElementById('chat-input').focus();
+}
+function cancelReply(){
+  chatReplyTarget=null;
+  const el=document.getElementById('chat-reply-preview');if(el)el.style.display='none';
+}
+async function openForwardPicker(id){
+  forwardMessageId=id;
+  const listEl=document.getElementById('chat-forward-list');
+  listEl.innerHTML='<div class="spinner"></div>';
+  document.getElementById('chat-forward-picker').style.display='flex';
+  let options=[{id:'',label:'👥 Class Group'}];
+  try{
+    const rows=await sbSelect('students',`class_id=eq.${loggedInStudent.class_id}&select=student_id,full_name`)||[];
+    rows.filter(s=>s.student_id!==loggedInStudent.student_id).forEach(s=>options.push({id:s.student_id,label:s.full_name}));
+  }catch(e){}
+  listEl.innerHTML=options.map(o=>`<div class="chip" style="display:block;margin-bottom:6px;" onclick="doForward('${o.id}')">${o.label}</div>`).join('');
+}
+function closeForwardPicker(){document.getElementById('chat-forward-picker').style.display='none';forwardMessageId=null;}
+async function doForward(targetId){
+  const m=chatMessagesCache[forwardMessageId];if(!m)return;
+  const recipientId=targetId===''?null:targetId;
+  try{
+    await sbInsert('chat_messages',{class_id:loggedInStudent.class_id,sender_id:loggedInStudent.student_id,sender_name:loggedInStudent.full_name,recipient_id:recipientId,content:m.content,forwarded_from:m.sender_name});
+    toast('➡️ Message forwarded!');
+    closeForwardPicker();
+    if(chatCurrentPeer===recipientId)loadChatMessages();
+  }catch(e){toast('❌ Could not forward — has the migration been run?','error');}
+}
+async function sendChatMessage(){
+  const input=document.getElementById('chat-input');
+  const content=input.value.trim();
+  if(!content||!loggedInStudent)return;
+  input.value='';
+  const payload={class_id:loggedInStudent.class_id,sender_id:loggedInStudent.student_id,sender_name:loggedInStudent.full_name,recipient_id:chatCurrentPeer,content};
+  if(chatReplyTarget){payload.reply_to_content=chatReplyTarget.content;payload.reply_to_sender=chatReplyTarget.sender;}
+  try{
+    await sbInsert('chat_messages',payload);
+    cancelReply();
+    loadChatMessages();
+  }catch(e){toast('❌ Could not send message.','error');}
 }
 
 // ── ADMIN LOGIN ───────────────────────
@@ -1366,12 +2477,211 @@ async function doAdminLogin(){
     try{const rows=await sbSelect('admins',`password=eq.${encodeURIComponent(pwd)}`);if(rows&&rows.length>0)granted=true;}catch(e){}
   }
   btn.textContent='🛡️ Enter Admin Dashboard';btn.classList.remove('loading');
-  if(granted){spawnEmoji(['🛡️','✅','🔓','🌟']);showPage('admin');loadStudents();loadAdminSettings();loadAdmins();loadNoticesAdmin();loadStats();}
+  if(granted){spawnEmoji(['🛡️','✅','🔓','🌟']);showPage('admin');loadStudents();loadAdminSettings();loadAdmins();loadNoticesAdmin();loadStats();logLogin('admin','Admin','');}
   else document.getElementById('err-admin').innerHTML='❌ Incorrect password.';
 }
 
+// ── TEACHER LOGIN & HOME ──────────────
+async function doTeacherLogin(){
+  const pwd=document.getElementById('teacher-pwd').value;
+  document.getElementById('err-teacher').textContent='';
+  if(!pwd){document.getElementById('err-teacher').innerHTML='⚠️ Enter the teacher password.';return;}
+  const btn=document.getElementById('teacher-btn');btn.textContent='🔍 Checking…';btn.classList.add('loading');
+  let granted=pwd==='Teacher@2026';
+  loggedInTeacherName='Teacher';
+  if(!granted){
+    try{const rows=await sbSelect('teachers',`password=eq.${encodeURIComponent(pwd)}`);if(rows&&rows.length>0){granted=true;loggedInTeacherName=rows[0].name||'Teacher';}}catch(e){}
+  }
+  btn.textContent='👨‍🏫 Enter Teacher Home';btn.classList.remove('loading');
+  if(granted){
+    spawnEmoji(['👨‍🏫','✅','🌟']);
+    document.querySelector('#page-login .card').style.display='none';
+    document.getElementById('teacher-home').style.display='block';
+    document.querySelector('#teacher-home h2').textContent='Welcome, '+loggedInTeacherName+'!';
+    loadTeacherLiveStatus();
+    logLogin('teacher',loggedInTeacherName,'');
+  }else document.getElementById('err-teacher').innerHTML='❌ Incorrect password.';
+}
+
+// ── GUARDIAN CHECK (read-only, phone-based, no password) ──
+async function doGuardianLogin(){
+  const admission=document.getElementById('guardian-admission').value.trim();
+  const phone=document.getElementById('guardian-phone').value.trim();
+  document.getElementById('err-guardian').textContent='';
+  if(!admission||!phone){document.getElementById('err-guardian').innerHTML='⚠️ Enter the Admission No. and guardian phone number.';return;}
+  const btn=document.getElementById('guardian-btn');btn.textContent='🔍 Checking…';btn.classList.add('loading');
+  try{
+    const rows=await sbSelect('students',`student_id=eq.${encodeURIComponent(admission)}&kin_phone=eq.${encodeURIComponent(phone)}`);
+    if(rows&&rows.length>0){
+      spawnEmoji(['👪','✅','🌟']);
+      document.querySelector('#page-login .card').style.display='none';
+      document.getElementById('guardian-home').style.display='block';
+      renderGuardianView(rows[0]);
+      logLogin('guardian',rows[0].full_name,rows[0].student_id,'Guardian check-in');
+    }else document.getElementById('err-guardian').innerHTML='❌ No matching record — check the Admission Number and the phone number used at registration.';
+  }catch(e){document.getElementById('err-guardian').innerHTML='❌ Connection error. Try again.';}
+  finally{btn.textContent='🔍 Check Status';btn.classList.remove('loading');}
+}
+async function renderGuardianView(s){
+  const body=document.getElementById('guardian-home-body');
+  body.innerHTML='<div class="spinner"></div>';
+  const className=(allClasses.find(c=>c.id===s.class_id)||{}).name||'Not yet assigned';
+  let attPct=null,attended=0,totalSessions=0,avgPct=null,quizCount=0,gradeRows=[];
+  try{
+    const [sessions,attRecords,quizResults,grades]=await Promise.all([
+      s.class_id?sbSelect('live_sessions',`class_id=eq.${s.class_id}`).catch(()=>[]):[],
+      sbSelect('attendance',`student_id=eq.${encodeURIComponent(s.student_id)}`).catch(()=>[]),
+      sbSelect('quiz_results',`student_id=eq.${encodeURIComponent(s.student_id)}`).catch(()=>[]),
+      sbSelect('grades',`student_id=eq.${encodeURIComponent(s.student_id)}&order=created_at.desc`).catch(()=>[])
+    ]);
+    totalSessions=(sessions||[]).length;
+    attended=new Set((attRecords||[]).map(r=>r.session_id)).size;
+    attPct=totalSessions?Math.round((attended/totalSessions)*100):null;
+    const results=quizResults||[];quizCount=results.length;
+    avgPct=results.length?Math.round(results.reduce((sum,r)=>sum+(r.score/r.total*100),0)/results.length):null;
+    gradeRows=grades||[];
+  }catch(e){}
+  body.innerHTML=`
+    <div style="text-align:center;margin-bottom:1rem;">
+      ${s.photo_data?`<img src="${s.photo_data}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);"/>`:''}
+      <h3 style="margin-top:.5rem;">${s.full_name}</h3>
+      <span class="badge ${s.approved?'badge-approved':'badge-pending'}">${s.approved?'✅ Approved':'⏳ Pending'}</span>
+    </div>
+    <div style="font-size:13px;line-height:1.9;margin-bottom:1rem;">
+      <strong>🎓 Admission No.:</strong> ${s.student_id}<br/>
+      <strong>📋 Programme:</strong> ${s.program||'—'} &nbsp; <strong>🏫 Class:</strong> ${className}<br/>
+      <strong>📅 Interview:</strong> ${s.interview_date?s.interview_date+' '+(s.interview_time||''):'Not scheduled'} ${s.venue?'@ '+s.venue:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem;">
+      <div style="background:var(--gray-50);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:${attPct!==null&&attPct<85?'#dc2626':'var(--navy)'};">${attPct!==null?attPct+'%':'—'}</div>
+        <div style="font-size:11px;color:var(--gray-500);">Attendance${totalSessions?' ('+attended+'/'+totalSessions+')':''}</div>
+      </div>
+      <div style="background:var(--gray-50);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:1.3rem;font-weight:800;color:var(--navy);">${avgPct!==null?avgPct+'%':'—'}</div>
+        <div style="font-size:11px;color:var(--gray-500);">Avg Quiz Score${quizCount?' ('+quizCount+' taken)':''}</div>
+      </div>
+    </div>
+    ${gradeRows.length?`<div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:.4rem;">📊 Recent Grades</div>`+gradeRows.slice(0,5).map(g=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray-100);font-size:13px;"><span>${g.subject} (${g.term})</span><span>${g.score}/${g.max_score}</span></div>`).join(''):''}
+    <button class="btn-secondary" style="width:100%;margin-top:1.25rem;" onclick="resetLoginPage();showPage('login')">← Log Out</button>
+  `;
+}
+// Fire-and-forget: never blocks or breaks login if the log table isn't there yet.
+function logLogin(role,name,identifier,note){
+  sbInsert('login_logs',{role,name,identifier,note:note||null}).catch(()=>{});
+}
+async function loadLoginLogs(){
+  const tb=document.getElementById('loginlogs-tbody');
+  tb.innerHTML='<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+  try{
+    const rows=await sbSelect('login_logs','order=logged_in_at.desc&limit=200')||[];
+    if(!rows.length){tb.innerHTML='<tr><td colspan="5" class="no-data">No login activity yet.</td></tr>';return;}
+    const roleIcon={student:'🎓',teacher:'👨‍🏫',admin:'🛡️',guardian:'👪'};
+    tb.innerHTML=rows.map(r=>`<tr><td>${roleIcon[r.role]||''} ${r.role}</td><td>${r.name||'—'}</td><td>${r.identifier||'—'}</td><td>${r.note||'—'}</td><td>${new Date(r.logged_in_at).toLocaleString()}</td></tr>`).join('');
+  }catch(e){tb.innerHTML='<tr><td colspan="5" class="no-data">⚠️ login_logs table not found — run the migration first.</td></tr>';}
+}
+
+// ── ATTENDANCE ─────────────────────────
+async function loadAttendanceForClass(){
+  const classId=document.getElementById('att-class-select').value;
+  const el=document.getElementById('attendance-summary');
+  if(!classId){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">Select a class above.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const sessions=await sbSelect('live_sessions',`class_id=eq.${classId}`)||[];
+    const totalSessions=sessions.length;
+    const records=await sbSelect('attendance',`class_id=eq.${classId}`)||[];
+    const classStudents=allStudents.filter(s=>s.class_id===classId);
+    if(!totalSessions){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No live sessions have been run for this class yet.</p>';return;}
+    if(!classStudents.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No students assigned to this class yet.</p>';return;}
+    el.innerHTML=`<p style="font-size:12px;color:var(--gray-500);margin-bottom:.75rem;">${totalSessions} live session(s) run for this class.</p>`+
+      classStudents.map(s=>{
+        const attended=new Set(records.filter(r=>r.student_id===s.student_id).map(r=>r.session_id)).size;
+        const pct=Math.round((attended/totalSessions)*100);
+        const low=pct<85;
+        return `<div class="admin-item"><div style="font-size:13px;">${s.full_name}</div><span class="badge" style="background:${low?'#fee2e2':'#dcfce7'};color:${low?'#b91c1c':'#166534'};">${attended}/${totalSessions} — ${pct}%</span></div>`;
+      }).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ attendance table not found — run the migration first.</p>';}
+}
+
+// ── GRADES ─────────────────────────────
+function populateGradeStudentSelect(classId){
+  const sel=document.getElementById('gr-student-select');
+  const list=allStudents.filter(s=>s.class_id===classId);
+  sel.innerHTML=list.length?list.map(s=>`<option value="${s.student_id}">${s.full_name}</option>`).join(''):'<option value="">— No students in this class —</option>';
+}
+async function loadGradesForClass(){
+  const classId=document.getElementById('gr-class-select').value;
+  const el=document.getElementById('grades-list');
+  if(!classId){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">Select a class above.</p>';document.getElementById('gr-student-select').innerHTML='<option value="">— Select a class first —</option>';return;}
+  populateGradeStudentSelect(classId);
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const rows=await sbSelect('grades',`class_id=eq.${classId}&order=created_at.desc`)||[];
+    if(!rows.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No grades recorded yet.</p>';return;}
+    el.innerHTML=rows.map(g=>{
+      const student=allStudents.find(s=>s.student_id===g.student_id);
+      return `<div class="admin-item"><div style="font-size:13px;"><strong>${student?student.full_name:g.student_id}</strong> — ${g.subject} (${g.term}): ${g.score}/${g.max_score}${g.comment?' — <em style="color:var(--gray-400);">'+g.comment+'</em>':''}</div><button class="btn-delete" onclick="removeGrade('${g.id}')">🗑️</button></div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ grades table not found — run the migration first.</p>';}
+}
+async function addGrade(){
+  const classId=document.getElementById('gr-class-select').value;
+  const studentId=document.getElementById('gr-student-select').value;
+  const term=document.getElementById('gr-term').value.trim();
+  const subject=document.getElementById('gr-subject').value.trim();
+  const score=document.getElementById('gr-score').value;
+  const max=document.getElementById('gr-max').value||100;
+  const comment=document.getElementById('gr-comment').value.trim()||null;
+  if(!classId||!studentId){toast('⚠️ Select a class and student.','error');return;}
+  if(!term||!subject||score===''){toast('⚠️ Fill in term, subject, and score.','error');return;}
+  try{
+    await sbInsert('grades',{class_id:classId,student_id:studentId,term,subject,score:parseInt(score,10),max_score:parseInt(max,10),comment});
+    document.getElementById('gr-subject').value='';document.getElementById('gr-score').value='';document.getElementById('gr-comment').value='';
+    loadGradesForClass();toast('✅ Grade added!');
+  }catch(e){toast('❌ Failed to add grade.','error');}
+}
+async function removeGrade(id){
+  try{await sbDelete('grades',`id=eq.${id}`);loadGradesForClass();toast('🗑️ Grade removed.');}
+  catch(e){toast('❌ Failed.','error');}
+}
+async function teacherStartLive(){
+  const classId=document.getElementById('t-class-select').value;
+  if(!classId){toast('⚠️ Please select a class first.','error');return;}
+  const className=(allClasses.find(c=>c.id===classId)||{}).name||'';
+  const room='live-'+Date.now().toString(36);
+  try{await sbInsert('live_sessions',{room_code:room,is_active:true,teacher_name:loggedInTeacherName,class_id:classId,class_name:className});toast('🔴 Live class started for '+className+'!');loadTeacherLiveStatus();}
+  catch(e){toast('❌ Could not start live class. Has the live_sessions/classes migration been run?','error');}
+}
+async function teacherEndLive(){
+  try{
+    const rows=await sbSelect('live_sessions','is_active=eq.true&order=started_at.desc&limit=1');
+    if(rows&&rows.length)await sbUpdate('live_sessions',`id=eq.${rows[0].id}`,{is_active:false,ended_at:new Date().toISOString()});
+    toast('⏹️ Live class ended.');leaveLiveClass();loadTeacherLiveStatus();
+  }catch(e){toast('❌ Could not end live class.','error');}
+}
+async function loadTeacherLiveStatus(){
+  const sel=document.getElementById('t-class-select');
+  if(sel && sel.options.length<=1)sel.innerHTML='<option value="">— Select a class —</option>'+allClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  try{
+    const rows=await sbSelect('live_sessions','is_active=eq.true&order=started_at.desc&limit=1');
+    const el=document.getElementById('t-live-status');
+    const startBtn=document.getElementById('t-live-start-btn'),endBtn=document.getElementById('t-live-end-btn'),joinBtn=document.getElementById('t-live-join-btn'),picker=document.getElementById('t-class-picker');
+    if(rows&&rows.length){
+      el.innerHTML='🔴 <strong>LIVE</strong> — '+(rows[0].class_name||'Class')+' — started '+new Date(rows[0].started_at).toLocaleTimeString();
+      startBtn.style.display='none';endBtn.style.display='inline-block';picker.style.display='none';
+      joinBtn.style.display='inline-block';joinBtn.dataset.room=rows[0].room_code;
+    }else{
+      el.innerHTML='⚪ No active session';
+      startBtn.style.display='inline-block';endBtn.style.display='none';joinBtn.style.display='none';picker.style.display='block';
+    }
+  }catch(e){const el=document.getElementById('t-live-status');if(el)el.innerHTML='⚠️ live_sessions table not found — ask admin to run the migration.';}
+}
+
 // ── SHOW SLIP ─────────────────────────
+let currentSlipStudent=null;
 function showSlip(s){
+  currentSlipStudent=s;
   document.getElementById('slip-logo').src=LOGO_SRC;
   const ph=document.getElementById('slip-photo');
   if(s.photo_data){ph.outerHTML=`<img id="slip-photo" class="slip-student-photo" src="${s.photo_data}" alt="Photo"/>`;}
@@ -1396,6 +2706,21 @@ function showSlip(s){
   }else{ic.innerHTML='<div class="slip-pending-box">⏳ Interview details not set yet. Please check back later or contact the school.</div>';}
   document.getElementById('slip-container').style.display='block';
   document.getElementById('slip-container').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function shareSlipWhatsApp(){
+  const s=currentSlipStudent;if(!s)return;
+  let msg=`🕌 *MSMR Kano – Admission Confirmation*\n\n`+
+    `👤 Name: ${s.full_name||'—'}\n`+
+    `🎓 Admission No.: ${s.student_id||'—'}\n`+
+    `📋 Programme: ${s.program||'—'}\n`;
+  if(s.interview_date&&s.interview_time&&s.venue){
+    const d=new Date(s.interview_date+'T'+s.interview_time);
+    msg+=`📅 Interview: ${d.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})} at ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}\n📍 Venue: ${s.venue}\n`;
+  }else{
+    msg+=`⏳ Interview details not scheduled yet.\n`;
+  }
+  msg+=`\nMu'assasatu Sheikh Muhammad Rabi'u, Kano`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
 // ── LOAD STUDENTS ─────────────────────
@@ -1435,7 +2760,7 @@ function renderStudents(){
   document.getElementById('students-tbody').innerHTML=list.map((s,i)=>`
     <tr>
       <td>${s.photo_data?`<img class="student-thumb" src="${s.photo_data}" alt="photo"/>`:`<div class="student-avatar">${(s.full_name||'?')[0]}</div>`}</td>
-      <td><strong>${s.full_name||'—'}</strong><br/><span style="font-size:11px;color:var(--gray-400);">${s.dob||''}</span></td>
+      <td><strong>${s.full_name||'—'}</strong>${s.flagged_duplicate?' <span class="badge" style="background:#fee2e2;color:#b91c1c;">⚠️ Dup</span>':''}<br/><span style="font-size:11px;color:var(--gray-400);">${s.dob||''}</span></td>
       <td>${s.student_id||'—'}</td>
       <td>${s.phone||'<em style="color:var(--gray-400)">—</em>'}</td>
       <td><span class="badge badge-program">${s.program||'—'}</span></td>
@@ -1443,6 +2768,7 @@ function renderStudents(){
       <td>${s.state||'—'}</td>
       <td><span class="badge ${s.approved?'badge-approved':'badge-pending'}">${s.approved?'✅ Approved':'⏳ Pending'}</span></td>
       <td>
+        <button class="btn-edit" onclick="viewStudentDetails('${s.id}')" title="View full details">👁️</button>
         <button class="btn-edit" onclick="openEdit('${s.id}')">✏️</button>
         <button class="btn-delete" onclick="deleteStudent('${s.id}','${(s.full_name||'').replace(/'/g,"\\'")}')" >🗑️</button>
       </td>
@@ -1492,6 +2818,47 @@ async function clearFlag(id){
   catch(e){toast('❌ Could not update. Try again.','error');}
 }
 
+// Retroactively compares EVERY student against every other student — catches duplicates that
+// existed before the auto-check was added, or that were added directly rather than through registration.
+async function scanAllDuplicates(){
+  const btn=document.getElementById('scan-dup-btn');
+  btn.textContent='🔎 Scanning… this may take a moment';btn.classList.add('loading');
+  try{
+    // fill in any missing face descriptors first, so photo matching works for older records too
+    await Promise.race([faceModelsPromise||startFaceModelsLoading(),new Promise(res=>setTimeout(res,4000))]);
+    for(const s of allStudents){
+      if(!s.face_descriptor&&s.photo_data&&faceModelsReady){
+        const d=await computeFaceDescriptor(s.photo_data);
+        if(d){s.face_descriptor=d;try{await sbUpdate('students',`id=eq.${s.id}`,{face_descriptor:d});}catch(e){}}
+      }
+    }
+    let foundCount=0;
+    for(let i=0;i<allStudents.length;i++){
+      const a=allStudents[i];
+      let reasons=[],matchId=null,matchName=null;
+      for(let j=0;j<allStudents.length;j++){
+        if(i===j)continue;
+        const b=allStudents[j];
+        const r=[];
+        if(a.full_name&&b.full_name&&a.full_name.trim().toLowerCase()===b.full_name.trim().toLowerCase()&&a.dob&&a.dob===b.dob)r.push('Same name & date of birth');
+        if(a.phone&&b.phone&&a.phone===b.phone)r.push('Same phone number');
+        if(a.kin_phone&&b.kin_phone&&a.kin_phone===b.kin_phone)r.push('Same guardian phone number');
+        if(a.face_descriptor&&b.face_descriptor){
+          try{if(faceapi.euclideanDistance(a.face_descriptor,b.face_descriptor)<0.6)r.push('Face photo closely matches another student');}catch(e){}
+        }
+        if(r.length){reasons=r;matchId=b.student_id;matchName=b.full_name;break;}
+      }
+      if(reasons.length&&!a.flagged_duplicate){
+        foundCount++;
+        try{await sbUpdate('students',`id=eq.${a.id}`,{flagged_duplicate:true,duplicate_reason:reasons.join(' + '),duplicate_match_id:matchId,duplicate_match_name:matchName});}catch(e){}
+      }
+    }
+    toast(foundCount?`🚩 Scan complete — flagged ${foundCount} possible duplicate(s).`:'✅ Scan complete — no duplicates found.');
+    await loadStudents();
+  }catch(e){toast('❌ Scan failed. Try again.','error');}
+  finally{btn.textContent='🔍 Scan All Students for Duplicates';btn.classList.remove('loading');}
+}
+
 function updateSelectedCount(){
   const n=document.querySelectorAll('.approve-check:checked').length;
   document.getElementById('selected-count').textContent=n+' selected';
@@ -1522,12 +2889,57 @@ function openEdit(id){
   const s=allStudents.find(x=>x.id===id);if(!s)return;
   editingId=id;
   document.getElementById('modal-name').textContent=s.full_name;
+  const sel=document.getElementById('modal-class');
+  sel.innerHTML='<option value="">— No class assigned —</option>'+allClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  sel.value=s.class_id||'';
   document.getElementById('modal-date').value=s.interview_date||'';
   document.getElementById('modal-time').value=s.interview_time||'';
   document.getElementById('modal-venue').value=s.venue||'';
   document.getElementById('edit-modal').classList.add('open');
 }
+async function saveStudentClass(){
+  const classId=document.getElementById('modal-class').value||null;
+  try{
+    await sbUpdate('students',`id=eq.${editingId}`,{class_id:classId});
+    const idx=allStudents.findIndex(x=>x.id===editingId);
+    if(idx>-1)allStudents[idx].class_id=classId;
+    renderStudents();toast('✅ Class assigned!');
+  }catch(e){toast('❌ Could not assign class — has the migration been run?','error');}
+}
 function closeModal(){document.getElementById('edit-modal').classList.remove('open');editingId=null;}
+
+async function viewStudentDetails(id){
+  const s=allStudents.find(x=>x.id===id);if(!s)return;
+  document.getElementById('detail-modal').classList.add('open');
+  const body=document.getElementById('detail-modal-body');
+  body.innerHTML='<div class="spinner"></div>';
+  const className=(allClasses.find(c=>c.id===s.class_id)||{}).name||'— Not assigned —';
+  let loginRows=[];
+  try{loginRows=await sbSelect('login_logs',`identifier=eq.${encodeURIComponent(s.student_id)}&order=logged_in_at.desc&limit=20`)||[];}catch(e){}
+  body.innerHTML=`
+    <div style="text-align:center;margin-bottom:1rem;">
+      ${s.photo_data?`<img src="${s.photo_data}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);"/>`:''}
+      <h3 style="margin-top:.5rem;">${s.full_name||'—'}</h3>
+      <span class="badge ${s.approved?'badge-approved':'badge-pending'}">${s.approved?'✅ Approved':'⏳ Pending'}</span>
+      ${s.flagged_duplicate?' <span class="badge" style="background:#fee2e2;color:#b91c1c;">⚠️ Flagged Duplicate</span>':''}
+    </div>
+    <div style="font-size:13px;line-height:1.9;">
+      <strong>🎓 Admission No.:</strong> ${s.student_id||'—'}<br/>
+      <strong>🎂 DOB:</strong> ${s.dob||'—'} &nbsp; <strong>Gender:</strong> ${s.gender||'—'}<br/>
+      <strong>📞 Phone:</strong> ${s.phone||'—'}<br/>
+      <strong>📍 Address:</strong> ${s.address||'—'} (${s.lga||'—'}, ${s.state||'—'})<br/>
+      <strong>🏥 Illness:</strong> ${s.illness||'None reported'}<br/>
+      <strong>📋 Programme:</strong> ${s.program||'—'} &nbsp; <strong>🏫 Class:</strong> ${className}<br/>
+      <strong>👨‍👩‍👦 Guardian:</strong> ${s.kin_name||'—'} (${s.kin_relationship||'—'}) — ${s.kin_phone||'—'}<br/>
+      <strong>📅 Registered:</strong> ${s.registered_at?new Date(s.registered_at).toLocaleString():'—'}<br/>
+      <strong>📅 Interview:</strong> ${s.interview_date||'Not scheduled'} ${s.interview_time||''} ${s.venue?'@ '+s.venue:''}
+    </div>
+    <hr style="border:none;border-top:1px solid var(--gray-200);margin:1rem 0;"/>
+    <h4 style="font-size:13px;margin-bottom:.5rem;">🕵️ Recent Login Activity</h4>
+    ${loginRows.length?loginRows.map(r=>`<div style="font-size:12px;color:var(--gray-600);padding:4px 0;border-bottom:1px solid var(--gray-100);">${new Date(r.logged_in_at).toLocaleString()}</div>`).join(''):'<p style="font-size:12px;color:var(--gray-400);">No login activity recorded yet.</p>'}
+  `;
+}
+function closeDetailModal(){document.getElementById('detail-modal').classList.remove('open');}
 async function saveEdit(){
   const date=document.getElementById('modal-date').value;
   const time=document.getElementById('modal-time').value;
@@ -1626,6 +3038,9 @@ async function addAdmin(){
   const pwd=document.getElementById('new-admin-pwd').value.trim();
   if(!name||!pwd){toast('⚠️ Enter name and password.','error');return;}
   if(pwd.length<6){toast('⚠️ Password must be 6+ characters.','error');return;}
+  const nameLower=name.toLowerCase();
+  if((allAdmins||[]).some(a=>(a.name||'').toLowerCase()===nameLower)){toast('❌ An admin with that name already exists.','error');return;}
+  if((allAdmins||[]).some(a=>a.password===pwd)){toast('❌ That password is already used by another admin — choose a different one.','error');return;}
   try{await sbInsert('admins',{name,password:pwd});document.getElementById('new-admin-name').value='';document.getElementById('new-admin-pwd').value='';await loadAdmins();toast('✅ Admin added!');}
   catch(e){toast('❌ Failed to add admin.','error');}
 }
@@ -1635,23 +3050,256 @@ async function removeAdmin(id,name){
   catch(e){toast('❌ Failed.','error');}
 }
 
+// ── TEACHERS ───────────────────────────
+let allTeachers=[];
+async function loadTeachers(){
+  try{
+    allTeachers=await sbSelect('teachers','order=created_at.asc')||[];
+    const el=document.getElementById('teacher-list');
+    if(!allTeachers.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No teacher accounts yet. Anyone can currently log in with the default password <strong>Teacher@2026</strong> — add named accounts below to replace that.</p>';return;}
+    el.innerHTML=allTeachers.map(t=>`<div class="admin-item"><div style="display:flex;align-items:center;gap:8px;"><div class="admin-avatar-sm">${(t.name||'T')[0].toUpperCase()}</div><div><div style="font-size:13px;font-weight:700;">${t.name}</div></div></div><div style="display:flex;gap:6px;align-items:center;"><span class="badge-admin-tag">👨‍🏫 Teacher</span><button class="btn-delete" onclick="removeTeacher('${t.id}','${(t.name||'').replace(/'/g,"\\'")}')">🗑️</button></div></div>`).join('');
+  }catch(e){document.getElementById('teacher-list').innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ teachers table not found — run the migration first.</p>';}
+}
+async function addTeacher(){
+  const name=document.getElementById('new-teacher-name').value.trim();
+  const pwd=document.getElementById('new-teacher-pwd').value.trim();
+  if(!name||!pwd){toast('⚠️ Enter name and password.','error');return;}
+  if(pwd.length<6){toast('⚠️ Password must be 6+ characters.','error');return;}
+  const nameLower=name.toLowerCase();
+  if(allTeachers.some(t=>(t.name||'').toLowerCase()===nameLower)){toast('❌ A teacher with that name already exists.','error');return;}
+  if(allTeachers.some(t=>t.password===pwd)){toast('❌ That password is already used by another teacher — choose a different one.','error');return;}
+  try{await sbInsert('teachers',{name,password:pwd});document.getElementById('new-teacher-name').value='';document.getElementById('new-teacher-pwd').value='';await loadTeachers();toast('✅ Teacher added!');}
+  catch(e){toast('❌ Failed to add teacher.','error');}
+}
+async function removeTeacher(id,name){
+  if(!confirm(`Remove teacher "${name}"?`))return;
+  try{await sbDelete('teachers',`id=eq.${id}`);await loadTeachers();toast('🗑️ Teacher removed.');}
+  catch(e){toast('❌ Failed.','error');}
+}
+
+// ── CLASSES ────────────────────────────
+let allClasses=[];
+async function loadClasses(){
+  try{
+    allClasses=await sbSelect('classes','order=created_at.asc')||[];
+    const el=document.getElementById('class-list');
+    if(!el)return;
+    if(!allClasses.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No classes yet. Add one above, then assign students via each student\'s ✏️ Edit button.</p>';return;}
+    el.innerHTML=allClasses.map(c=>{
+      const count=allStudents.filter(s=>s.class_id===c.id).length;
+      return `<div class="admin-item"><div><div style="font-size:13px;font-weight:700;">${c.name}</div><div style="font-size:11px;color:var(--gray-400);">${count} student${count!==1?'s':''}</div></div><button class="btn-delete" onclick="removeClass('${c.id}','${(c.name||'').replace(/'/g,"\\'")}')">🗑️</button></div>`;
+    }).join('');
+  }catch(e){const el=document.getElementById('class-list');if(el)el.innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ classes table not found — run the migration first.</p>';}
+}
+async function addClass(){
+  const name=document.getElementById('new-class-name').value.trim();
+  if(!name){toast('⚠️ Enter a class name.','error');return;}
+  try{await sbInsert('classes',{name});document.getElementById('new-class-name').value='';await loadClasses();toast('✅ Class added!');}
+  catch(e){toast('❌ Failed to add class.','error');}
+}
+async function removeClass(id,name){
+  if(!confirm(`Remove class "${name}"? Students assigned to it will become unassigned.`))return;
+  try{await sbDelete('classes',`id=eq.${id}`);await loadClasses();await loadStudents();toast('🗑️ Class removed.');}
+  catch(e){toast('❌ Failed. Make sure no live session currently references this class.','error');}
+}
+function renderBulkAssignList(){
+  const el=document.getElementById('bulk-assign-list');
+  if(!el)return;
+  const q=(document.getElementById('bulk-assign-search')?.value||'').toLowerCase();
+  const list=allStudents.filter(s=>(s.full_name||'').toLowerCase().includes(q));
+  if(!list.length){el.innerHTML='<p style="font-size:12px;color:var(--gray-400);">No students found.</p>';return;}
+  el.innerHTML=list.map(s=>{
+    const currentClass=(allClasses.find(c=>c.id===s.class_id)||{}).name;
+    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;border-bottom:1px solid var(--gray-100);">
+      <input type="checkbox" class="bulk-assign-check" data-id="${s.id}"/>
+      ${s.photo_data?`<img src="${s.photo_data}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;"/>`:`<div style="width:22px;height:22px;border-radius:50%;background:var(--gray-300);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;">${(s.full_name||'?')[0]}</div>`}
+      <span>${s.full_name}</span>
+      ${currentClass?`<span style="margin-left:auto;font-size:11px;color:var(--gray-400);">${currentClass}</span>`:''}
+    </label>`;
+  }).join('');
+}
+async function bulkAssignClass(){
+  const classId=document.getElementById('bulk-class-select').value;
+  if(!classId){toast('⚠️ Select a target class first.','error');return;}
+  const checked=Array.from(document.querySelectorAll('.bulk-assign-check:checked')).map(c=>c.dataset.id);
+  if(!checked.length){toast('⚠️ Check at least one student.','error');return;}
+  try{
+    for(const id of checked){
+      await sbUpdate('students',`id=eq.${id}`,{class_id:classId});
+      const idx=allStudents.findIndex(x=>x.id===id);
+      if(idx>-1)allStudents[idx].class_id=classId;
+    }
+    toast(`✅ Assigned ${checked.length} student(s) to class!`);
+    renderStudents();renderBulkAssignList();loadClasses();
+  }catch(e){toast('❌ Bulk assign failed partway through — check and retry.','error');}
+}
+function populateClassSelect(selectId){
+  const sel=document.getElementById(selectId);
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">— Select a class —</option>'+allClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(current)sel.value=current;
+}
+
+// ── TIMETABLE ──────────────────────────
+const DAY_ORDER=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+async function loadTimetableForClass(){
+  const classId=document.getElementById('tt-class-select').value;
+  const el=document.getElementById('timetable-list');
+  if(!classId){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">Select a class above.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const rows=await sbSelect('timetable',`class_id=eq.${classId}`)||[];
+    rows.sort((a,b)=>DAY_ORDER.indexOf(a.day_of_week)-DAY_ORDER.indexOf(b.day_of_week)||(a.start_time||'').localeCompare(b.start_time||''));
+    if(!rows.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No periods added yet.</p>';return;}
+    el.innerHTML=rows.map(r=>`<div class="admin-item"><div><strong style="font-size:12px;">${r.day_of_week}</strong> — ${r.subject} <span style="color:var(--gray-400);font-size:12px;">(${r.start_time||'?'}–${r.end_time||'?'})</span></div><button class="btn-delete" onclick="removeTimetableEntry('${r.id}')">🗑️</button></div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ timetable table not found — run the migration first.</p>';}
+}
+async function addTimetableEntry(){
+  const classId=document.getElementById('tt-class-select').value;
+  if(!classId){toast('⚠️ Select a class first.','error');return;}
+  const day=document.getElementById('tt-day').value;
+  const subject=document.getElementById('tt-subject').value.trim();
+  const start=document.getElementById('tt-start').value;
+  const end=document.getElementById('tt-end').value;
+  if(!subject){toast('⚠️ Enter a subject.','error');return;}
+  try{
+    await sbInsert('timetable',{class_id:classId,day_of_week:day,subject,start_time:start,end_time:end});
+    document.getElementById('tt-subject').value='';document.getElementById('tt-start').value='';document.getElementById('tt-end').value='';
+    loadTimetableForClass();toast('✅ Period added!');
+  }catch(e){toast('❌ Failed to add period.','error');}
+}
+async function removeTimetableEntry(id){
+  try{await sbDelete('timetable',`id=eq.${id}`);loadTimetableForClass();toast('🗑️ Period removed.');}
+  catch(e){toast('❌ Failed.','error');}
+}
+
+// ── QUIZZES ────────────────────────────
+// Static sample question bank by subject — NOT AI-generated, just a ready-made starting point
+// admin can quick-add then edit/remove questions from before publishing.
+const QUIZ_BANK={
+  tajweed:[
+    {question:"What does 'Ghunnah' refer to in Tajweed?",option_a:"A nasal sound",option_b:"A stop in recitation",option_c:"A type of vowel",option_d:"A hand gesture",correct_option:"A"},
+    {question:"How many Madd letters are there?",option_a:"2",option_b:"3",option_c:"4",option_d:"5",correct_option:"B"},
+    {question:"What is 'Idgham' in Tajweed?",option_a:"Merging one letter into another",option_b:"Stopping fully",option_c:"Elongating a vowel",option_d:"Silent letter",correct_option:"A"},
+    {question:"Which reciter's style (riwayah) is most commonly taught in West Africa?",option_a:"Warsh",option_b:"Hafs 'an 'Asim",option_c:"Qalun",option_d:"Al-Susi",correct_option:"B"},
+    {question:"What does 'Qalqalah' produce?",option_a:"A bouncing/echoing sound",option_b:"Complete silence",option_c:"A long vowel",option_d:"A nasal tone",correct_option:"A"}
+  ],
+  hifz:[
+    {question:"How many Juz are in the Qur'an?",option_a:"20",option_b:"25",option_c:"30",option_d:"114",correct_option:"C"},
+    {question:"How many Surahs are in the Qur'an?",option_a:"99",option_b:"104",option_c:"114",option_d:"120",correct_option:"C"},
+    {question:"Which Surah is known as the 'Heart of the Qur'an'?",option_a:"Al-Fatiha",option_b:"Ya-Sin",option_c:"Al-Ikhlas",option_d:"Al-Baqarah",correct_option:"B"},
+    {question:"What is the longest Surah in the Qur'an?",option_a:"Al-Baqarah",option_b:"An-Nisa",option_c:"Al-Imran",option_d:"Al-Ma'idah",correct_option:"A"},
+    {question:"What is a completed memorizer of the Qur'an called?",option_a:"Muballigh",option_b:"Hafiz",option_c:"Imam",option_d:"Qari",correct_option:"B"}
+  ],
+  fiqh:[
+    {question:"How many daily prayers are obligatory in Islam?",option_a:"3",option_b:"4",option_c:"5",option_d:"6",correct_option:"C"},
+    {question:"What breaks the fast during Ramadan?",option_a:"Sleeping",option_b:"Eating or drinking intentionally",option_c:"Talking",option_d:"Standing",correct_option:"B"},
+    {question:"What is Zakat?",option_a:"A voluntary gift",option_b:"An obligatory charity",option_c:"A type of prayer",option_d:"A pilgrimage rite",correct_option:"B"},
+    {question:"What is required before performing Salah?",option_a:"Wudhu (ablution)",option_b:"Fasting",option_c:"Reciting Qur'an",option_d:"Paying Zakat",correct_option:"A"},
+    {question:"Which month is fasting obligatory in?",option_a:"Shawwal",option_b:"Ramadan",option_c:"Muharram",option_d:"Rajab",correct_option:"B"}
+  ],
+  aqeedah:[
+    {question:"How many pillars of Iman (faith) are there?",option_a:"5",option_b:"6",option_c:"7",option_d:"4",correct_option:"B"},
+    {question:"What does 'Tawheed' mean?",option_a:"Oneness of Allah",option_b:"Charity",option_c:"Prayer",option_d:"Pilgrimage",correct_option:"A"},
+    {question:"How many Pillars of Islam are there?",option_a:"4",option_b:"5",option_c:"6",option_d:"7",correct_option:"B"},
+    {question:"Belief in which of these is a pillar of Iman?",option_a:"Angels",option_b:"Nations",option_c:"Mountains",option_d:"Seasons",correct_option:"A"},
+    {question:"What is Shirk?",option_a:"Associating partners with Allah",option_b:"Giving charity",option_c:"Fasting",option_d:"Praying",correct_option:"A"}
+  ],
+  seerah:[
+    {question:"In which city was Prophet Muhammad ﷺ born?",option_a:"Madinah",option_b:"Makkah",option_c:"Ta'if",option_d:"Jerusalem",correct_option:"B"},
+    {question:"What is the migration of the Prophet ﷺ from Makkah to Madinah called?",option_a:"Isra",option_b:"Hijrah",option_c:"Mi'raj",option_d:"Ghazwah",correct_option:"B"},
+    {question:"Who was the first wife of Prophet Muhammad ﷺ?",option_a:"Aisha",option_b:"Hafsa",option_c:"Khadijah",option_d:"Zainab",correct_option:"C"},
+    {question:"Who was the first Caliph after the Prophet ﷺ?",option_a:"Umar ibn al-Khattab",option_b:"Abu Bakr as-Siddiq",option_c:"Uthman ibn Affan",option_d:"Ali ibn Abi Talib",correct_option:"B"},
+    {question:"In which cave did the Prophet ﷺ receive the first revelation?",option_a:"Cave of Thawr",option_b:"Cave of Hira",option_c:"Cave of Uhud",option_d:"Cave of Badr",correct_option:"B"}
+  ]
+};
+function quickAddFromBank(){
+  const subject=document.getElementById('qz-bank-subject').value;
+  const questions=QUIZ_BANK[subject]||[];
+  quizQuestionsDraft=quizQuestionsDraft.concat(questions);
+  renderQuizQuestionDraftList();
+  toast(`✅ Added ${questions.length} sample questions — review and edit before publishing!`);
+}
+let quizQuestionsDraft=[];
+async function loadQuizzesForClass(){
+  const classId=document.getElementById('qz-class-select').value;
+  const el=document.getElementById('quiz-list');
+  if(!classId){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">Select a class above.</p>';return;}
+  el.innerHTML='<div class="spinner"></div>';
+  try{
+    const rows=await sbSelect('quizzes',`class_id=eq.${classId}&order=created_at.desc`)||[];
+    if(!rows.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-400);">No quizzes yet for this class.</p>';return;}
+    el.innerHTML=rows.map(q=>`<div class="admin-item"><div><strong style="font-size:13px;">${q.title}</strong></div><div style="display:flex;gap:6px;"><button class="btn-edit" onclick="viewQuizResults('${q.id}','${(q.title||'').replace(/'/g,"\\'")}')">📊 Results</button><button class="btn-delete" onclick="removeQuiz('${q.id}')">🗑️</button></div></div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:13px;color:#dc2626;">⚠️ quizzes table not found — run the migration first.</p>';}
+}
+function addQuizQuestion(){
+  const q=document.getElementById('qz-q-text').value.trim();
+  const a=document.getElementById('qz-opt-a').value.trim(),b=document.getElementById('qz-opt-b').value.trim(),c=document.getElementById('qz-opt-c').value.trim(),d=document.getElementById('qz-opt-d').value.trim();
+  const correct=document.getElementById('qz-correct').value;
+  if(!q||!a||!b||!c||!d){toast('⚠️ Fill in the question and all 4 options.','error');return;}
+  quizQuestionsDraft.push({question:q,option_a:a,option_b:b,option_c:c,option_d:d,correct_option:correct});
+  ['qz-q-text','qz-opt-a','qz-opt-b','qz-opt-c','qz-opt-d'].forEach(id=>document.getElementById(id).value='');
+  renderQuizQuestionDraftList();
+  toast('✅ Question added to draft.');
+}
+function renderQuizQuestionDraftList(){
+  const el=document.getElementById('qz-question-list');
+  if(!quizQuestionsDraft.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--gray-600);margin-bottom:.5rem;">Questions in this quiz ('+quizQuestionsDraft.length+'):</div>'+
+    quizQuestionsDraft.map((qq,i)=>`<div class="admin-item"><div style="font-size:12px;">${i+1}. ${qq.question} <em style="color:var(--gray-400);">(Correct: ${qq.correct_option})</em></div><button class="btn-delete" onclick="removeQuizQuestionDraft(${i})">🗑️</button></div>`).join('');
+}
+function removeQuizQuestionDraft(i){quizQuestionsDraft.splice(i,1);renderQuizQuestionDraftList();}
+async function publishQuiz(){
+  const classId=document.getElementById('qz-class-select').value;
+  const title=document.getElementById('qz-title').value.trim();
+  if(!classId){toast('⚠️ Select a class first.','error');return;}
+  if(!title){toast('⚠️ Enter a quiz title.','error');return;}
+  if(!quizQuestionsDraft.length){toast('⚠️ Add at least one question.','error');return;}
+  try{
+    const quiz=await sbInsert('quizzes',{class_id:classId,title});
+    const quizId=quiz[0].id;
+    for(const q of quizQuestionsDraft){await sbInsert('quiz_questions',{quiz_id:quizId,...q});}
+    quizQuestionsDraft=[];renderQuizQuestionDraftList();
+    document.getElementById('qz-title').value='';
+    loadQuizzesForClass();
+    toast('🚀 Quiz published!');
+  }catch(e){toast('❌ Failed to publish — has the quiz migration been run?','error');}
+}
+async function removeQuiz(id){
+  if(!confirm('Delete this quiz and all its questions/results?'))return;
+  try{await sbDelete('quiz_questions',`quiz_id=eq.${id}`);await sbDelete('quiz_results',`quiz_id=eq.${id}`);await sbDelete('quizzes',`id=eq.${id}`);loadQuizzesForClass();toast('🗑️ Quiz deleted.');}
+  catch(e){toast('❌ Failed.','error');}
+}
+async function viewQuizResults(id,title){
+  try{
+    const rows=await sbSelect('quiz_results',`quiz_id=eq.${id}&order=score.desc`)||[];
+    if(!rows.length){alert(`No results yet for "${title}".`);return;}
+    alert(`Results for "${title}":\n\n`+rows.map(r=>`${r.student_name}: ${r.score}/${r.total}`).join('\n'));
+  }catch(e){toast('❌ Could not load results.','error');}
+}
+
 // ── SETTINGS ─────────────────────────
 async function loadAdminSettings(){
   try{
     const rows=await sbSelect('settings')||[];
     rows.forEach(r=>{
-      if(r.key==='imageUrl')document.getElementById('setting-image').value=r.value||'';
+      if(r.key==='imageUrl'){
+        let imgs;
+        try{imgs=JSON.parse(r.value);if(!Array.isArray(imgs))imgs=r.value?[r.value]:[];}
+        catch(_){imgs=r.value?[r.value]:[];}
+        document.getElementById('setting-image').value=imgs.join('\n');
+      }
     });
   }catch(e){}
 }
 async function saveSetting(type){
   try{
     if(type==='image'){
-      const value=document.getElementById('setting-image').value.trim();
-      await sbUpsert('settings',{key:'imageUrl',value});
-      const bg=document.getElementById('hero-bg');
-      if(value){bg.style.backgroundImage=`url('${value}')`;bg.classList.add('loaded');}
-      toast('✅ Hero photo updated!');
+      const lines=document.getElementById('setting-image').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      await sbUpsert('settings',{key:'imageUrl',value:JSON.stringify(lines)});
+      startHeroSlideshow(lines);
+      toast(lines.length?`✅ Hero slideshow updated (${lines.length} photo${lines.length>1?'s':''})!`:'✅ Hero photo cleared.');
     }
   }catch(e){toast('❌ Save failed.','error');}
 }
@@ -1676,8 +3324,16 @@ function showPanel(name,el){
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   if(name==='admins')loadAdmins();
+  if(name==='teachers')loadTeachers();
+  if(name==='classes'){loadClasses();populateClassSelect('bulk-class-select');renderBulkAssignList();}
+  if(name==='timetable')populateClassSelect('tt-class-select');
+  if(name==='quizzes')populateClassSelect('qz-class-select');
+  if(name==='loginlogs')loadLoginLogs();
+  if(name==='attendance')populateClassSelect('att-class-select');
+  if(name==='grades')populateClassSelect('gr-class-select');
   if(name==='notices')loadNoticesAdmin();
   if(name==='flagged')renderFlagged();
+  if(name==='live')loadLiveAdminStatus();
   if(name==='settings'){loadAdminSettings();loadStats();}
 }
 function adminLogout(){showPage('home');toast('👋 Logged out.');}
@@ -1697,8 +3353,10 @@ async function loadSettings(){
     const rows=await sbSelect('settings')||[];
     rows.forEach(r=>{
       if(r.key==='imageUrl'&&r.value){
-        const bg=document.getElementById('hero-bg');
-        bg.style.backgroundImage=`url('${r.value}')`;bg.classList.add('loaded');
+        let imgs;
+        try{imgs=JSON.parse(r.value);if(!Array.isArray(imgs))imgs=[r.value];}
+        catch(_){imgs=[r.value];}
+        startHeroSlideshow(imgs);
       }
     });
   }catch(e){}
@@ -1716,27 +3374,344 @@ async function loadStudentCount(){
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter')return;
   const ap=document.querySelector('.page.active').id;
-  if(ap==='page-login'){loginType==='student'?doStudentLogin():doAdminLogin();}
+  if(ap==='page-login'){loginType==='student'?doStudentLogin():loginType==='teacher'?doTeacherLogin():doAdminLogin();}
 });
 document.getElementById('edit-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('detail-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDetailModal();});
+
+// ── LIVE VIDEO CLASS (WebRTC mesh via Supabase Realtime signaling) ─
+// NOTE: uses public STUN servers only (no TURN relay). Works reliably for small
+// groups (~5 people) on decent networks; some mobile/restrictive networks may fail to connect.
+const RTC_CONFIG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+const LIVE_MAX_PARTICIPANTS=5;
+let liveChannel=null,liveLocalStream=null,livePeers={},liveMyId=null,liveRoomCode=null,liveIsTeacher=false;
+let liveMyName='',livePeerNames={},handRaised=false;
+let liveMicOn=true,liveCamOn=true,activeLiveSession=null;
+
+function getSbClient(){
+  if(!window._sbClient)window._sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  return window._sbClient;
+}
+
+// ── Homepage banner: poll for an active session ──
+async function checkLiveSession(){
+  try{
+    const rows=await sbSelect('live_sessions','is_active=eq.true&order=started_at.desc&limit=1');
+    activeLiveSession=(rows&&rows.length)?rows[0]:null;
+    const banner=document.getElementById('live-banner');
+    if(banner)banner.style.display=activeLiveSession?'flex':'none';
+  }catch(e){/* table may not exist yet until migration is run */}
+  if(loggedInStudent)await checkStudentLiveSession();
+}
+let studentActiveLiveSession=null,lastNotifiedSessionId=null;
+async function checkStudentLiveSession(){
+  const studentBanner=document.getElementById('student-live-banner');
+  if(!loggedInStudent||!loggedInStudent.class_id){if(studentBanner)studentBanner.style.display='none';return;}
+  try{
+    const rows=await sbSelect('live_sessions',`is_active=eq.true&class_id=eq.${loggedInStudent.class_id}&order=started_at.desc&limit=1`);
+    studentActiveLiveSession=(rows&&rows.length)?rows[0]:null;
+    if(studentBanner)studentBanner.style.display=studentActiveLiveSession?'flex':'none';
+    if(studentActiveLiveSession&&studentActiveLiveSession.id!==lastNotifiedSessionId){
+      lastNotifiedSessionId=studentActiveLiveSession.id;
+      notifyStudent('🔴 Live class started!','Your class is live now — open MSMR to join.');
+    }
+  }catch(e){}
+  checkForNewQuizzes();
+}
+// Browser notifications only work while this tab is open (even backgrounded) and after the
+// student taps "Enable Notifications". True SMS/WhatsApp delivery when the site is closed
+// would need a paid third-party service (e.g. Twilio, Africa's Talking) — not free/built-in.
+function notifyStudent(title,body){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{new Notification(title,{body});}catch(e){}
+}
+function enableNotifications(){
+  if(!('Notification' in window)){toast('⚠️ Notifications are not supported on this browser.','error');return;}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted'){toast('🔔 Notifications enabled on this device!');document.getElementById('enable-notif-btn').style.display='none';}
+    else toast('Notifications were not enabled.','error');
+  });
+}
+async function checkForNewQuizzes(){
+  if(!loggedInStudent||!loggedInStudent.class_id)return;
+  try{
+    const quizzes=await sbSelect('quizzes',`class_id=eq.${loggedInStudent.class_id}`)||[];
+    const seenKey='msmr_seen_quizzes_'+loggedInStudent.student_id;
+    const seen=JSON.parse(localStorage.getItem(seenKey)||'[]');
+    const newOnes=quizzes.filter(q=>!seen.includes(q.id));
+    if(newOnes.length&&seen.length>0){newOnes.forEach(q=>notifyStudent('📝 New quiz posted!',q.title));}
+    localStorage.setItem(seenKey,JSON.stringify(quizzes.map(q=>q.id)));
+  }catch(e){}
+}
+
+function enterLivePage(roomCode,isTeacher){
+  liveRoomCode=roomCode;liveIsTeacher=isTeacher;
+  liveMyName=isTeacher?loggedInTeacherName:((loggedInStudent&&loggedInStudent.full_name)||'Student');
+  showPage('live');
+  document.getElementById('live-prejoin').style.display='block';
+  document.getElementById('live-active-view').style.display='none';
+  document.getElementById('live-full-msg').style.display='none';
+  document.getElementById('live-room-info').textContent=isTeacher?"You're starting the class — students can join once you're in.":'Ready to join the live class?';
+}
+
+// ── Admin controls ──
+async function adminStartLive(){
+  const classId=document.getElementById('live-class-select').value;
+  if(!classId){toast('⚠️ Please select a class first.','error');return;}
+  const className=(allClasses.find(c=>c.id===classId)||{}).name||'';
+  const room='live-'+Date.now().toString(36);
+  try{
+    await sbInsert('live_sessions',{room_code:room,is_active:true,teacher_name:'Admin',class_id:classId,class_name:className});
+    toast('🔴 Live class started for '+className+'!');
+    loadLiveAdminStatus();
+  }catch(e){toast('❌ Could not start live class. Has the migration been run?','error');console.error(e);}
+}
+async function adminEndLive(){
+  try{
+    const rows=await sbSelect('live_sessions','is_active=eq.true&order=started_at.desc&limit=1');
+    if(rows&&rows.length)await sbUpdate('live_sessions',`id=eq.${rows[0].id}`,{is_active:false,ended_at:new Date().toISOString()});
+    toast('⏹️ Live class ended.');
+    leaveLiveClass();
+    loadLiveAdminStatus();
+  }catch(e){toast('❌ Could not end live class.','error');}
+}
+async function loadLiveAdminStatus(){
+  const sel=document.getElementById('live-class-select');
+  if(sel&&sel.options.length<=1)sel.innerHTML='<option value="">— Select a class —</option>'+allClasses.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  try{
+    const rows=await sbSelect('live_sessions','is_active=eq.true&order=started_at.desc&limit=1');
+    const el=document.getElementById('live-admin-status');
+    const startBtn=document.getElementById('live-start-btn'),endBtn=document.getElementById('live-end-btn'),joinBtn=document.getElementById('live-join-teacher-btn'),picker=document.getElementById('live-class-picker');
+    if(rows&&rows.length){
+      el.innerHTML='🔴 <strong>LIVE</strong> — '+(rows[0].class_name||'Class')+' — started '+new Date(rows[0].started_at).toLocaleTimeString();
+      startBtn.style.display='none';endBtn.style.display='inline-block';picker.style.display='none';
+      joinBtn.style.display='inline-block';joinBtn.dataset.room=rows[0].room_code;
+    }else{
+      el.innerHTML='⚪ No active session';
+      startBtn.style.display='inline-block';endBtn.style.display='none';joinBtn.style.display='none';picker.style.display='block';
+    }
+  }catch(e){const el=document.getElementById('live-admin-status');if(el)el.innerHTML='⚠️ live_sessions table not found — run the migration first.';}
+}
+
+// ── WebRTC mesh engine ──
+async function joinLiveClass(isTeacher){
+  document.getElementById('live-prejoin').style.display='none';
+  document.getElementById('live-full-msg').style.display='none';
+  liveMyId=(isTeacher?'teacher-':'student-')+Math.random().toString(36).substring(2,9);
+  const sb=getSbClient();
+  liveChannel=sb.channel('live-room-'+liveRoomCode,{config:{presence:{key:liveMyId}}});
+  let decided=false;
+
+  liveChannel.on('presence',{event:'sync'},()=>{
+    const state=liveChannel.presenceState();
+    Object.keys(state).forEach(key=>{
+      const nm=state[key]&&state[key][0]&&state[key][0].name;
+      if(nm){livePeerNames[key]=nm;if(key!==liveMyId)updateLiveTileName(key,nm);}
+    });
+    const otherIds=Object.keys(state).filter(k=>k!==liveMyId);
+    if(!decided){
+      decided=true;
+      if(otherIds.length>=LIVE_MAX_PARTICIPANTS){
+        getSbClient().removeChannel(liveChannel);liveChannel=null;
+        document.getElementById('live-full-msg').style.display='block';
+        document.getElementById('live-prejoin').style.display='block';
+        return;
+      }
+      startLiveMedia(isTeacher,otherIds);
+    }else{
+      otherIds.forEach(otherId=>{
+        if(!livePeers[otherId]&&liveMyId<otherId)createLivePeerConnection(otherId,true);
+      });
+    }
+  });
+  liveChannel.on('presence',{event:'leave'},({key})=>{
+    removeLiveTile(key);
+    if(livePeers[key]){livePeers[key].close();delete livePeers[key];}
+  });
+  liveChannel.on('broadcast',{event:'signal'},({payload})=>{
+    if(payload.to===liveMyId)handleLiveSignal(payload);
+  });
+  liveChannel.on('broadcast',{event:'hand'},({payload})=>{
+    updateHandBadge(payload.from,payload.raised);
+    if(payload.raised&&payload.from!==liveMyId)toast('✋ '+payload.name+' wants to talk');
+  });
+  liveChannel.subscribe();
+}
+
+let liveAttendanceId=null;
+const VIDEO_FILTERS={none:'none',grayscale:'grayscale(1)',sepia:'sepia(0.8)',bright:'brightness(1.25) saturate(1.15)',cool:'hue-rotate(190deg) saturate(1.1)',warm:'sepia(0.3) saturate(1.4) hue-rotate(-10deg)'};
+let currentVideoFilter='none',liveRawStream=null,liveFilterVideoEl=null,liveFilterCanvas=null,liveFilterCtx=null,liveFilterRAF=null;
+function setVideoFilter(f){currentVideoFilter=f;}
+function setupFilteredStream(rawStream){
+  liveFilterVideoEl=document.createElement('video');
+  liveFilterVideoEl.srcObject=rawStream;liveFilterVideoEl.muted=true;liveFilterVideoEl.playsInline=true;liveFilterVideoEl.play().catch(()=>{});
+  liveFilterCanvas=document.createElement('canvas');
+  liveFilterCanvas.width=480;liveFilterCanvas.height=360;
+  liveFilterCtx=liveFilterCanvas.getContext('2d');
+  const draw=()=>{
+    if(liveCamOn&&liveFilterVideoEl.readyState>=2){
+      liveFilterCtx.filter=VIDEO_FILTERS[currentVideoFilter]||'none';
+      liveFilterCtx.drawImage(liveFilterVideoEl,0,0,liveFilterCanvas.width,liveFilterCanvas.height);
+    }else{
+      liveFilterCtx.filter='none';liveFilterCtx.fillStyle='#111';liveFilterCtx.fillRect(0,0,liveFilterCanvas.width,liveFilterCanvas.height);
+    }
+    liveFilterRAF=requestAnimationFrame(draw);
+  };
+  draw();
+  const canvasStream=liveFilterCanvas.captureStream(30);
+  const audioTrack=rawStream.getAudioTracks()[0];
+  if(audioTrack)canvasStream.addTrack(audioTrack);
+  return canvasStream;
+}
+async function startLiveMedia(isTeacher,initialOtherIds){
+  try{liveRawStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});}
+  catch(e){toast('❌ Camera/microphone access is needed to join the live class.','error');leaveLiveClass();return;}
+  liveLocalStream=setupFilteredStream(liveRawStream);
+  addLiveTile(liveMyId,liveLocalStream,liveMyName+' (You)',true);
+  document.getElementById('live-active-view').style.display='block';
+  await liveChannel.track({id:liveMyId,name:liveMyName});
+  initialOtherIds.forEach(otherId=>{if(liveMyId<otherId)createLivePeerConnection(otherId,true);});
+  if(!isTeacher&&loggedInStudent){
+    try{
+      const rows=await sbSelect('live_sessions',`room_code=eq.${liveRoomCode}&select=id,class_id&limit=1`);
+      if(rows&&rows.length){
+        const rec=await sbInsert('attendance',{session_id:rows[0].id,class_id:rows[0].class_id,student_id:loggedInStudent.student_id,student_name:loggedInStudent.full_name});
+        liveAttendanceId=rec&&rec[0]&&rec[0].id;
+      }
+    }catch(e){/* attendance table may not exist yet */}
+  }
+}
+
+function createLivePeerConnection(peerId,isInitiator){
+  const pc=new RTCPeerConnection(RTC_CONFIG);
+  livePeers[peerId]=pc;
+  liveLocalStream.getTracks().forEach(t=>pc.addTrack(t,liveLocalStream));
+  pc.onicecandidate=e=>{if(e.candidate)sendLiveSignal(peerId,{kind:'ice',candidate:e.candidate});};
+  pc.ontrack=e=>{addLiveTile(peerId,e.streams[0],livePeerNames[peerId]||'Participant',false);};
+  if(isInitiator){
+    pc.onnegotiationneeded=async()=>{
+      try{
+        const offer=await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        sendLiveSignal(peerId,{kind:'offer',sdp:pc.localDescription});
+      }catch(e){console.warn('Negotiation failed:',e);}
+    };
+  }
+  return pc;
+}
+function sendLiveSignal(to,data){
+  liveChannel.send({type:'broadcast',event:'signal',payload:{from:liveMyId,to,...data}});
+}
+async function handleLiveSignal(payload){
+  const peerId=payload.from;
+  let pc=livePeers[peerId];
+  try{
+    if(payload.kind==='offer'){
+      if(!pc)pc=createLivePeerConnection(peerId,false);
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      const answer=await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      sendLiveSignal(peerId,{kind:'answer',sdp:pc.localDescription});
+    }else if(payload.kind==='answer'){
+      if(pc)await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+    }else if(payload.kind==='ice'){
+      if(pc)await pc.addIceCandidate(payload.candidate);
+    }
+  }catch(e){console.warn('Signal handling failed:',e);}
+}
+function addLiveTile(id,stream,label,isLocal){
+  let tile=document.getElementById('live-tile-'+id);
+  if(!tile){
+    tile=document.createElement('div');tile.className='live-tile';tile.id='live-tile-'+id;
+    tile.innerHTML=`<video autoplay playsinline ${isLocal?'muted':''}></video><span class="live-name-tag">${label}</span>`;
+    document.getElementById('live-video-grid').appendChild(tile);
+  }
+  tile.querySelector('video').srcObject=stream;
+}
+function updateLiveTileName(id,name){
+  const tile=document.getElementById('live-tile-'+id);
+  if(tile){const tag=tile.querySelector('.live-name-tag');if(tag)tag.textContent=name;}
+}
+function updateHandBadge(id,raised){
+  const tile=document.getElementById('live-tile-'+id);
+  if(!tile)return;
+  let badge=tile.querySelector('.hand-badge');
+  if(raised){
+    if(!badge){badge=document.createElement('span');badge.className='hand-badge';badge.textContent='✋';tile.appendChild(badge);}
+  }else if(badge)badge.remove();
+}
+function toggleRaiseHand(){
+  handRaised=!handRaised;
+  const btn=document.getElementById('live-hand-btn');
+  btn.style.background=handRaised?'#f59e0b':'';
+  updateHandBadge(liveMyId,handRaised);
+  if(liveChannel)liveChannel.send({type:'broadcast',event:'hand',payload:{from:liveMyId,name:liveMyName,raised:handRaised}});
+}
+function removeLiveTile(id){const t=document.getElementById('live-tile-'+id);if(t)t.remove();}
+function toggleLiveMic(){
+  liveMicOn=!liveMicOn;
+  liveLocalStream?.getAudioTracks().forEach(t=>t.enabled=liveMicOn);
+  document.getElementById('live-mic-btn').textContent=liveMicOn?'🎤':'🔇';
+}
+function toggleLiveCam(){
+  liveCamOn=!liveCamOn;
+  document.getElementById('live-cam-btn').textContent=liveCamOn?'📷':'📵';
+}
+function leaveLiveClass(){
+  if(liveAttendanceId){sbUpdate('attendance',`id=eq.${liveAttendanceId}`,{left_at:new Date().toISOString()}).catch(()=>{});liveAttendanceId=null;}
+  if(liveChannel){try{liveChannel.untrack();}catch(e){}try{getSbClient().removeChannel(liveChannel);}catch(e){}liveChannel=null;}
+  Object.values(livePeers).forEach(pc=>{if(pc&&pc.close)pc.close();});
+  livePeers={};livePeerNames={};handRaised=false;
+  if(liveFilterRAF){cancelAnimationFrame(liveFilterRAF);liveFilterRAF=null;}
+  if(liveRawStream){liveRawStream.getTracks().forEach(t=>t.stop());liveRawStream=null;}
+  if(liveLocalStream){liveLocalStream.getTracks().forEach(t=>t.stop());liveLocalStream=null;}
+  liveFilterVideoEl=null;liveFilterCanvas=null;liveFilterCtx=null;currentVideoFilter='none';
+  const filterSel=document.getElementById('live-filter-select');if(filterSel)filterSel.value='none';
+  const grid=document.getElementById('live-video-grid');if(grid)grid.innerHTML='';
+  document.getElementById('live-active-view').style.display='none';
+  showPage('home');
+}
+window.addEventListener('beforeunload',()=>{
+  if(liveRawStream)liveRawStream.getTracks().forEach(t=>t.stop());
+  if(liveLocalStream)liveLocalStream.getTracks().forEach(t=>t.stop());
+});
 
 // ── AI FAQ CHAT WIDGET ────────────────
 const AI_FAQ=[
   {kw:['free','fee','cost','pay','money','sadaqah'],a:'MSMR is 100% free — no registration or tuition fees. The school may occasionally invite voluntary contributions for special events, but this is never required. 💰'},
   {kw:['age','old','15','young'],a:'The programme is open to students aged 15 and above. 🎂'},
-  {kw:['register','apply','sign up','join','admission'],a:'Tap "Apply Now — It\'s Free!" on the home page and follow the 6 steps: Personal info → Photo → Programme → Next of Kin → Account → Agreement. It takes about 5 minutes. 📝'},
-  {kw:['slip','check my slip','interview','login','username','password','admission'],a:'Tap "Login" in the top menu, choose "Student", then enter the Admission No. and password you were given during registration to view your interview slip. 🎫'},
-  {kw:['rule','rules','regulation','conduct','dress','attendance'],a:'You can read the full School Rules & Regulations on the "Rules" page in the menu — covering punctuality, conduct, Qur\'an handling, dress code, attendance and more. 📜'},
+  {kw:['register','apply','sign up','join','admission process','how do i register'],a:'Tap "Apply Now — It\'s Free!" on the home page and follow the 6 steps: Personal info → Photo → Programme → Next of Kin → Account → Agreement. It takes about 5 minutes. 📝'},
+  {kw:['slip','check my slip','interview slip'],a:'Tap "Login" in the top menu, choose "Student", then enter the Admission No. and password you were given during registration to view your interview slip. 🎫'},
+  {kw:['admission no','admission number','my id','forgot my number'],a:'Your Admission Number was shown to you right after registering (format: MSMR/YY/0000). If you lost it, please contact the school directly with your name and registration details. 🎓'},
+  {kw:['forgot password','reset password','lost password','wrong password'],a:'Passwords can\'t be reset from this page for security reasons — please visit the school office with your Admission Number so staff can help you. 🔑'},
+  {kw:['rule','rules','regulation','conduct','dress code'],a:'You can read the full School Rules & Regulations on the "Rules" page in the menu — covering punctuality, conduct, Qur\'an handling, dress code, attendance and more. 📜'},
+  {kw:['attendance','85%','absent','miss class'],a:'Minimum 85% attendance is required. Absences should be reported in advance — see the "Rules" page for full details. Attendance for live classes is now tracked automatically when you join. ✅'},
   {kw:['programme','program','hadda','biye','full time','part time','schedule','days'],a:'There are two tracks: 📅 Hadda (Full-Time, Mon–Fri) and 🌿 Biye (Part-Time, Sat & Sun only — ideal for students still in school). You choose during registration.'},
   {kw:['hifz','memoriz','quran','qur\'an','tajweed','juz'],a:'MSMR offers a free one-year Hifz (Qur\'an memorization) programme covering all 30 juz, with tajweed, daily review and an ijazah on completion. 📖'},
-  {kw:['address','location','where','kano'],a:'MSMR is located at No. 1 Sheikh Muhammad Rabi\'u Road, Kano, Nigeria. 📍'},
-  {kw:['contact','phone','call','whatsapp','reach'],a:'For direct contact, please use the phone number provided during your registration process, or ask a staff member at the school premises. 📞'},
-  {kw:['duration','long','year','how many'],a:'The Hifz programme runs for 1 year of full daily sessions (or the equivalent part-time schedule for Biye students). 📅'}
+  {kw:['address','location','where is','kano'],a:'MSMR is located at 2F5W+56J, Aminu Kano Way, LG, Kofar Walka, Kano 700282. 📍'},
+  {kw:['contact','phone number','call','whatsapp','reach you'],a:'You can reach the school on: 09067277943, 07043172330, 08034464470, 07069277885, or 08141959979. 📞'},
+  {kw:['duration','how long','how many years'],a:'The Hifz programme runs for 1 year of full daily sessions (or the equivalent part-time schedule for Biye students). 📅'},
+  {kw:['live class','join class','video class'],a:'If your teacher has started a live class, you\'ll see a "🔴 Live class happening now!" banner on your Student Home page after logging in — tap "Join Now" to enter with your camera and mic. 🎥'},
+  {kw:['quiz','exam','test'],a:'Any quiz assigned to your class shows up under "📝 Quizzes" on your Student Home page after logging in. Once you submit, your score is saved automatically. 📝'},
+  {kw:['timetable','next class','class schedule'],a:'Your weekly class schedule and next upcoming class are shown right on your Student Home page after logging in. 📅'},
+  {kw:['chat','message','classmate'],a:'After logging in, tap "💬 Class Chat" on your Student Home — you can message your whole class in the group tab, or a specific classmate privately. 💬'},
+  {kw:['class assign','which class','my class'],a:'Your class is assigned by the school admin after registration. If you haven\'t been assigned yet, please check back later or ask at the school office. 🏫'},
+  {kw:['teacher','malam','instructor'],a:'Teachers manage live classes and can be reached during scheduled sessions. For direct contact outside class, please use the school\'s phone numbers. 👨‍🏫'},
+  {kw:['camera not work','camera unavailable','photo not clear'],a:'Camera features need a secure connection (https) — make sure you\'re using the official site link, not a downloaded file. For a clearer photo, use good lighting and face the camera directly. 📸'}
 ];
+const AI_GREETINGS=['hi','hello','hey','salam','asalam','assalam','good morning','good afternoon','good evening'];
+const AI_THANKS=['thank','thanks','jazakallah','appreciate'];
 function aiFindReply(msg){
-  const m=msg.toLowerCase();
-  for(const item of AI_FAQ){ if(item.kw.some(k=>m.includes(k))) return item.a; }
-  return "I don't have a specific answer for that yet 🙏. Please try the quick questions above, check the Rules page, or contact the school directly for detailed help.";
+  const m=msg.toLowerCase().trim();
+  if(AI_GREETINGS.some(g=>m===g||m.startsWith(g+' ')||m.startsWith(g+'!')))return 'Wa alaikumus salam! 👋 Ask me anything about admissions, fees, your slip, quizzes, live classes, or the rules.';
+  if(AI_THANKS.some(t=>m.includes(t)))return 'You\'re welcome! 🤲 Let me know if there\'s anything else.';
+  let best=null,bestScore=0;
+  for(const item of AI_FAQ){
+    const score=item.kw.reduce((s,k)=>s+(m.includes(k)?k.length:0),0);
+    if(score>bestScore){bestScore=score;best=item;}
+  }
+  if(best)return best.a;
+  return "I don't have a specific answer for that yet 🙏. Try asking about fees, registration, your slip, quizzes, live classes, timetable, or the rules — or contact the school directly using the numbers in the footer.";
 }
 function aiAppendMsg(text,who){
   const body=document.getElementById('ai-chat-body');
@@ -1762,6 +3737,12 @@ function toggleAiChat(){
 }
 
 // ── BOOT ──────────────────────────────
+applyLanguage(currentLang);
+document.getElementById('footer-year').textContent=new Date().getFullYear();
+startFaceModelsLoading();
+checkLiveSession();
+setInterval(checkLiveSession,20000);
+loadClasses();
 loadSettings();
 loadStudentCount();
 loadNotices();
